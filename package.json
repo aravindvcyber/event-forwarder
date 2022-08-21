@@ -1,27 +1,61 @@
 {
   "name": "event-forwarder",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "author": {
+    "name": "Aravind Vadamalaimuthu"
+  },
   "bin": {
     "event-forwarder": "bin/event-forwarder.js"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
+    "build:ts": "tsc --noEmit",
+    "build": "NODE_ENV=production npm run wp:dev && tsc --noEmit && npm run test",
+    "watch": "tsc --noEmit -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "lint": "npm run build:ts && npx eslint --no-eslintrc -c .eslintrc.json . --ext .ts --fix",
+    "wp:dev": "MODE=development webpack",
+    "cdk:synth": "npm run build && cdk synth EventForwarderStack --profile=av",
+    "cdk:diff": "npm run build && cdk diff EventForwarderStack --profile=av",
+    "cdk:deploy": "npm run build && cdk deploy EventForwarderStack --verbose --profile=av --hotswap",
+    "cdk:destroy": "npm run build && cdk destroy EventForwarderStack --verbose --profile=av",
+    "wp:s": "MODE=development npx webpack --json > stats.json",
+    "wp:a": "npm run wp:s && npx webpack-bundle-analyzer stats.json"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.10",
+    "@slack/types": "^2.7.0",
+    "@slack/webhook": "^6.1.0",
+    "@types/aws-lambda": "^8.10.102",
+    "@types/config": "^3.3.0",
+    "@types/jest": "^26.0.24",
     "@types/node": "10.17.27",
-    "jest": "^26.4.2",
-    "ts-jest": "^26.2.0",
+    "@types/node-fetch": "^2.6.2",
+    "@typescript-eslint/eslint-plugin": "^5.33.1",
+    "@typescript-eslint/parser": "^5.33.1",
     "aws-cdk": "2.21.1",
-    "ts-node": "^9.0.0",
-    "typescript": "~3.9.7"
+    "eslint": "^8.22.0",
+    "eslint-config-standard-with-typescript": "^22.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.2.4",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-react": "^7.30.1",
+    "jest": "^26.6.3",
+    "node-fetch": "^2.6.7",
+    "ts-jest": "^26.5.6",
+    "ts-loader": "^9.3.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.7.4",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
     "aws-cdk-lib": "2.21.1",
-    "constructs": "^10.0.0",
-    "source-map-support": "^0.5.16"
+    "aws-sdk": "^2.1199.0",
+    "config": "^3.3.7",
+    "constructs": "^10.1.80",
+    "data-uri-to-buffer": "^4.0.0",
+    "react-scripts": "^5.0.1",
+    "source-map-support": "^0.5.21"
   }
 }

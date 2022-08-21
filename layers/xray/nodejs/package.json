@@ -1,0 +1,9 @@
+{
+  "name": "xray",
+  "version": "1.0.0",
+  "main": "xray.js",
+  "license": "MIT",
+  "dependencies": {
+    "aws-xray-sdk-core": "^3.3.5"
+  }
+}

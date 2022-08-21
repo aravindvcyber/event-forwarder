@@ -1,0 +1,6 @@
+{
+    "account": "123",
+    "region": "us-east-1",
+    "slackhook": "",
+    "eventStore": "eventStore"
+}
