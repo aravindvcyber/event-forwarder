@@ -9,3 +9,4 @@ cdk.out
 config/local.json
 config/production.json
 dist/
+lambda/stack-event-processor.spec.ts
