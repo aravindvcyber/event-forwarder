@@ -46,6 +46,8 @@ export function generateItemTemplate(type: "plain_text" | "mrkdwn", text:string,
 export function generateInnerSection (
   item: CloudformationEventDbModel
 ): PlainTextElement | MrkdwnElement {
+
+  logger.info(item, {item});
   let note: string = new Date(parseInt(item.time.N)).toLocaleString()  + ' | ' + item.type.S
 
   let itemTemplate: PlainTextElement | MrkdwnElement = generateItemTemplate('mrkdwn',note);
@@ -58,7 +60,7 @@ export function generateInnerSection (
   // logger.info({ type, time, stackDetail });
 
   if (item.type.S === CloudFormationStackEventBridgeEvent.Resource_Change) {
-    itemTemplate = generateItemTemplate('mrkdwn',">"+note + ' | *' + item.status.S + '* | Reason : _' + item.statusReason.S + '_ | Resource Type : ' + item.resourceType.S + ' | Logical-Resource-Id : `' + item.logicalResourceId.S + "` | Physical-Resource-Id : _" + item.physicalResourceId.S +"_")
+    itemTemplate = generateItemTemplate('mrkdwn',">"+note + ' | *' + item.status.S + '* | Reason : _' + item.statusReason.S + '_ | Resource Type : ' + item.resourceType.S + ' | Physical-Resource-Id : `' + item.physicalResourceId.S + "` | Logical-Resource-Id : (" + item.logicalResourceId.S +")")
   } else if (item.type.S === CloudFormationStackEventBridgeEvent.Stack_Change) {
     itemTemplate = generateItemTemplate('mrkdwn',">"+note + ' | *' + item.status.S + '* | Reason : _' + item.statusReason.S + '_');
   } else if (

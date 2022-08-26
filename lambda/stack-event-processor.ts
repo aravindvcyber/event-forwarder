@@ -16,7 +16,7 @@ import {
 } from "./cfn-events";
 import { dbPut, queryDbItems, updateDbItem } from "./dynamodb-utils";
 import { CloudformationEventDbModel, timeOrder, toDataModel } from "./model";
-import { QueryOutput, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
+import { AttributeMap, QueryOutput, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
 
 const middy = require("@middy/core");
 
@@ -61,12 +61,17 @@ const handle = async function (event: SQSEvent) {
       const dbContent: CloudformationEventDbModel = await toDataModel(content);
       await dbPut(dbContent);
 
+      const statusMatchList = dbContent.status.S.match(
+        /^((CREATE|UPDATE|DELETE)_COMPLETE|UPDATE_ROLLBACK_COMP)$/
+      );
+      logger.info('statusMatchList', {statusMatchList, status: dbContent.status.S, type: dbContent.type.S})
+
       if (
-        content.detail &&
-        content["detail-type"] ===
+        dbContent.type.S ===
           CloudFormationStackEventBridgeEvent.Stack_Change &&
         dbContent.status.S &&
-        (dbContent.status.S.match(/^((CREATE|UPDATE|DELETE)_COMPLETE|UPDATE_ROLLBACK_COMP)$/))
+        statusMatchList &&
+        statusMatchList.length > 0
       ) {
         stackId = dbContent.stackId.S;
         region = dbContent.region.S;
@@ -85,25 +90,20 @@ const handle = async function (event: SQSEvent) {
 
     const keyPairList: { PK: string; SK: string }[] = [];
 
-    if (output && output.Items) {
+    if (output && output.Items && output.Items.length > 0) {
+      let Items: CloudformationEventDbModel[] = [];
 
-      const Items: CloudformationEventDbModel[] = [];
-
-      output.Items.map((item) => {
-        const dbContent: CloudformationEventDbModel = JSON.parse(
-          JSON.stringify(item)
-        )});
+      Items = output.Items.map((item: AttributeMap) => {
+        return JSON.parse(JSON.stringify(item)) as CloudformationEventDbModel;
+      });
 
       Items.sort(timeOrder);
       Items.map((item) => {
-        const dbContent: CloudformationEventDbModel = JSON.parse(
-          JSON.stringify(item)
-        );
-        logger.info("dbContent:", { dbContent });
+        logger.info("dbItem:", { item });
 
-        keyPairList.push({ PK: dbContent.stackId.S, SK: dbContent.time.N });
+        keyPairList.push({ PK: item.stackId.S, SK: item.time.N });
 
-        collection.push(generateInnerSection(dbContent));
+        collection.push(generateInnerSection(item));
       });
     }
 
