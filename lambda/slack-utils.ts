@@ -11,84 +11,66 @@ import {
   DividerBlock,
   SectionBlock,
   PlainTextElement,
-  MrkdwnElement
+  MrkdwnElement,
+  ContextBlock
 } from '@slack/types'
 import {
-  CloudFormationResourceStatusChangeDetail,
   CloudFormationStackEventBridgeEvent
 } from './cfn-events'
 import {
   logger
 } from './stack-event-processor'
+import { CloudformationEventDbModel } from './model'
 
 const slackHook = new IncomingWebhook(process.env.SLACK_HOOK || '', {
   timeout: 0
 })
 
-export function generateInnerSection (
-  time: string,
-  type: string,
-  detail: any
-): PlainTextElement | MrkdwnElement {
-  let note: string = type + ' | ' + time
-
-  let itemTemplate: PlainTextElement | MrkdwnElement = {
-    type: 'plain_text',
-    text: note
+export function generateItemTemplate(type: "plain_text" | "mrkdwn", text:string, include: boolean = false): PlainTextElement | MrkdwnElement {
+  if(type === "mrkdwn"){
+    return {
+      type,
+      text,
+      verbatim: include
+    } as MrkdwnElement;
+  } else {
+    return {
+      type,
+      text,
+      emoji: include
+    } as PlainTextElement;
   }
+   
+}
 
-  const stackDetail: any = detail['status-details']
+export function generateInnerSection (
+  item: CloudformationEventDbModel
+): PlainTextElement | MrkdwnElement {
+  let note: string = new Date(parseInt(item.time.N)).toLocaleString()  + ' | ' + item.type.S
+
+  let itemTemplate: PlainTextElement | MrkdwnElement = generateItemTemplate('mrkdwn',note);
+
+  logger.info(item, {item});
+
+  //const stackDetail: any = JSON.parse(item.detail.S);
+  const driftDetail: any = JSON.parse(item.type.S === CloudFormationStackEventBridgeEvent.Drift_Detection_Change ? item.driftDetectionDetails.S : "{}" );
 
   // logger.info({ type, time, stackDetail });
 
-  if (type === CloudFormationStackEventBridgeEvent.Resource_Change) {
-    const content: CloudFormationResourceStatusChangeDetail = detail
-    itemTemplate = {
-      type: 'plain_text',
-      text:
-        note +
-        ' Change : ' +
-        stackDetail.status +
-        ' | Reason : ' +
-        stackDetail['status-reason'] +
-        ' | Resource Type : ' +
-        content['resource-type'] +
-        ' | Resource-logical : ' +
-        content['logical-resource-id']
-        // + " | Resource-physical : " +
-        // content["physical-resource-id"],
-    }
-  } else if (type === CloudFormationStackEventBridgeEvent.Stack_Change) {
-    itemTemplate = {
-      type: 'plain_text',
-      text:
-        note +
-        ' | Change : ' +
-        stackDetail.status +
-        ' | Reason : ' +
-        stackDetail['status-reason']
-    }
+  if (item.type.S === CloudFormationStackEventBridgeEvent.Resource_Change) {
+    itemTemplate = generateItemTemplate('mrkdwn',">"+note + ' | *' + item.status.S + '* | Reason : _' + item.statusReason.S + '_ | Resource Type : ' + item.resourceType.S + ' | Logical-Resource-Id : `' + item.logicalResourceId.S + "` | Physical-Resource-Id : _" + item.physicalResourceId.S +"_")
+  } else if (item.type.S === CloudFormationStackEventBridgeEvent.Stack_Change) {
+    itemTemplate = generateItemTemplate('mrkdwn',">"+note + ' | *' + item.status.S + '* | Reason : _' + item.statusReason.S + '_');
   } else if (
-    type === CloudFormationStackEventBridgeEvent.Drift_Detection_Change
+    item.type.S === CloudFormationStackEventBridgeEvent.Drift_Detection_Change
   ) {
-    itemTemplate = {
-      type: 'plain_text',
-      text:
-        note +
-        ' | Drift Status : ' +
-        stackDetail['stack-drift-status'] +
-        ' | isDetectionEnabled : ' +
-        stackDetail['detection-status']
-    }
+    itemTemplate = generateItemTemplate('mrkdwn',">"+note + ' | *' + item.status+'* | isDetectionEnabled : `' + item.detectionStatus.S + '` | isDetectionEnabled : ' + JSON.stringify(driftDetail, undefined, 2));
   } else {
-    note = JSON.stringify(detail, undefined, 2)
-    itemTemplate = {
-      type: 'mrkdwn',
-      text: '```' + note + '```'
-    }
+    note = JSON.stringify(item, undefined, 2)
+    itemTemplate = generateItemTemplate('mrkdwn','```' + note + '```');
   }
 
-  // logger.info(JSON.stringify(itemTemplate, undefined, 2));
+  logger.info(itemTemplate, {itemTemplate});
   return itemTemplate
 }
 export function stackEventMessageComposer (
@@ -125,25 +107,32 @@ export function stackEventMessageComposer (
 
   const stackBlock: SectionBlock = {
     type: 'section',
-    text: {
-      type: 'mrkdwn',
-      text: ':rocket: <' + stackLink + '|View Stack in AWS Console>'
+    text: generateItemTemplate('mrkdwn',':rocket: <' + stackLink + '|View Stack in AWS Console>'),
+    accessory: {
+      type: "button",
+      text: generateItemTemplate("plain_text", ":dango: Click to View", true) as PlainTextElement,
+      value: "stackLink",
+      url: stackLink,
+      action_id: "button-action"
     }
   }
   const cfnDesignerBlock: SectionBlock = {
     type: 'section',
-    text: {
-      type: 'mrkdwn',
-      text:
-        ':chart: <' +
-        cfnDesignerLink +
-        '|View Cloud Formation Template Designer in AWS Console>'
+    text: generateItemTemplate('mrkdwn', ':chart: <' +
+    cfnDesignerLink +
+    '|View Cloud Formation Template in AWS Console Designer>'),
+    accessory: {
+      type: "button",
+      text: generateItemTemplate("plain_text", ":dango: Click to View", true) as PlainTextElement,
+      value: "cfnDesignerLink",
+      url: cfnDesignerLink,
+      action_id: "button-action"
     }
   }
 
-  const contentSection: SectionBlock = {
-    type: 'section',
-    fields: [...payload]
+  const contentSection: ContextBlock = {
+    type: 'context',
+    elements: [...payload],
   }
   const blocks: Array<KnownBlock | Block> = [
     header,
@@ -165,7 +154,7 @@ export async function sendUsingSlackHook (blocks: Array<KnownBlock | Block>) {
       unfurl_links: false,
       unfurl_media: false
     }
-    logger.info({ message })
+    logger.info("msg",{ message })
     const response: IncomingWebhookResult = await slackHook.send(message)
     logger.info({ response })
   } catch (error) {

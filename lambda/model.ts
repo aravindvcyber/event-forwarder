@@ -12,8 +12,11 @@ export interface CloudformationEventDbModel {
     status: { S: string; },
     statusReason: { S: string; },
     resourceType : { S: string; },
+    logicalResourceId : { S: string; },
+    physicalResourceId : { S: string; },
     detectionStatus : { S: string; },
-    driftDetectionDetails: { S: string; }
+    driftDetectionDetails: { S: string; },
+    notified: {S: string;}
 }
 
 export const toDataModel = (event: CloudFormationStackEventBridgeEvents): CloudformationEventDbModel => {
@@ -23,9 +26,12 @@ export const toDataModel = (event: CloudFormationStackEventBridgeEvents): Cloudf
   });
   const type: { S: string; } = { S: event["detail-type"] };
   const status: { S: string; } = { S: ''};
+  const notified: {S: string;} = { S: 'false'};
   const statusReason: { S: string; } = { S: ''};
   const detectionStatus: { S: string; } = { S: ''};
   const resourceType: { S: string; } = { S: ''};
+  const logicalResourceId: { S: string; } = { S: ''};
+  const physicalResourceId: { S: string; } = { S: ''};
   const clientRequestToken: { S: string; } = { S: event["detail"]["client-request-token"] || ''};
   const detail: { S: string; } = { S: JSON.stringify(event.detail) };
   const stackId: { S: string; } = {S: event["detail"]["stack-id"]};
@@ -36,6 +42,9 @@ export const toDataModel = (event: CloudFormationStackEventBridgeEvents): Cloudf
     let det = event["detail"] as CloudFormationResourceStatusChangeDetail;
     status.S = det["status-details"].status;
     statusReason.S = det["status-details"]["status-reason"];
+    resourceType.S = det["resource-type"];
+    logicalResourceId.S = det["logical-resource-id"];
+    physicalResourceId.S = det["physical-resource-id"];
   } else if(type.S === CloudFormationStackEventBridgeEvent.Stack_Change){
     let det = event["detail"] as CloudFormationStackStatusChangeDetail;
     status.S = det["status-details"].status;
@@ -44,6 +53,9 @@ export const toDataModel = (event: CloudFormationStackEventBridgeEvents): Cloudf
     let det = event["detail"] as CloudFormationDriftDetectionStatusChangeDetail;
     status.S = det["status-details"]["stack-drift-status"];
     detectionStatus.S = det["status-details"]["detection-status"];
+    if(status.S === ''){
+      status.S = detectionStatus.S
+    }
     driftDetectionDetails.S = JSON.stringify(det["drift-detection-details"]);
   }
     const result:CloudformationEventDbModel = {
@@ -58,9 +70,24 @@ export const toDataModel = (event: CloudFormationStackEventBridgeEvents): Cloudf
             status,
             statusReason,
             resourceType,
+            logicalResourceId,
+            physicalResourceId,
             detectionStatus,
-            driftDetectionDetails
+            driftDetectionDetails,
+            notified
     }
     
     return result
+}
+
+
+export function timeOrder( a:CloudformationEventDbModel, b:CloudformationEventDbModel )
+  {
+  if ( a.time.N < b.time.N){
+    return -1;
+  }
+  if ( a.time.N > b.time.N){
+    return 1;
+  }
+  return 0;
 }

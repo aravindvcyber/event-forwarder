@@ -1,9 +1,7 @@
 {
   "name": "event-forwarder",
   "version": "1.0.0",
-  "author": {
-    "name": "Aravind Vadamalaimuthu"
-  },
+  "author": "Aravind Vadamalaimuthu",
   "bin": {
     "event-forwarder": "bin/event-forwarder.js"
   },
@@ -57,5 +55,13 @@
     "data-uri-to-buffer": "^4.0.0",
     "react-scripts": "^5.0.1",
     "source-map-support": "^0.5.21"
-  }
+  },
+  "description": "This is a blank project for CDK development with TypeScript.",
+  "main": "bin/event-forwarder.ts",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "license": "GPL-3.0-or-later",
+  "types": "./bin/event-forwarder.d.ts"
 }

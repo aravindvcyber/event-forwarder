@@ -1,5 +1,7 @@
 import { EventBridgeEvent } from 'aws-lambda/trigger/eventbridge'
 
+import { StackDriftStatus, StackStatus } from 'aws-sdk/clients/cloudformation'
+
 export declare type CloudFormationStackEventBridgeEvents = CloudFormationResourceStatusChangeEvent
 | CloudFormationStackStatusChangeEvent
 | CloudFormationDriftDetectionStatusChangeEvent
@@ -35,33 +37,31 @@ export class CloudFormationResourceStatusChangeDetail {
   'logical-resource-id': string
   'physical-resource-id': string
   'status-details': {
-    status: string
+    'status': StackStatus
     'status-reason': string
   }
-
   'resource-type': string
   'client-request-token': string
 }
 
+
 export class CloudFormationStackStatusChangeDetail {
   'stack-id': string
   'status-details': {
-    status: string
+    'status': StackStatus
     'status-reason': string
   }
-
   'client-request-token': string
 }
 export class CloudFormationDriftDetectionStatusChangeDetail {
   'stack-id': string
   'stack-drift-detection-id': string
   'status-details': {
-    'stack-drift-status': string
+    'stack-drift-status': StackDriftStatus
     'detection-status': string
   }
   'drift-detection-details': {
     'drifted-stack-resource-count': number
   }
-
   'client-request-token': string
 }
