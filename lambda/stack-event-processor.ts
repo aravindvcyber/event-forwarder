@@ -49,6 +49,7 @@ const handle = async function (event: SQSEvent) {
 
   let stackId: string = "";
   let region: string = "";
+  let account: string = "";
 
   logger.info("content:", JSON.stringify(event, undefined, 2));
 
@@ -67,14 +68,15 @@ const handle = async function (event: SQSEvent) {
       logger.info('statusMatchList', {statusMatchList, status: dbContent.status.S, type: dbContent.type.S})
 
       if (
-        dbContent.type.S ===
+         (dbContent.type.S ===
           CloudFormationStackEventBridgeEvent.Stack_Change &&
-        dbContent.status.S &&
         statusMatchList &&
-        statusMatchList.length > 0
+        statusMatchList.length > 0) || (dbContent.status.S === 'DELETE_IN_PROGRESS')
       ) {
+        logger.info('Notifiable Event found in batch: ', {dbContent})
         stackId = dbContent.stackId.S;
         region = dbContent.region.S;
+        account = dbContent.account.S;      
       }
     })
   );
@@ -112,7 +114,8 @@ const handle = async function (event: SQSEvent) {
     const messageBlocks: Array<KnownBlock | Block> = stackEventMessageComposer(
       collection,
       region,
-      stackId
+      stackId,
+      account
     );
 
     await sendUsingSlackHook(messageBlocks);

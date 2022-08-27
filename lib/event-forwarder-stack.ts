@@ -1,11 +1,10 @@
 import {
   aws_events_targets,
-  Duration,
   RemovalPolicy,
   Stack,
   StackProps,
 } from "aws-cdk-lib";
-import { Rule } from "aws-cdk-lib/aws-events";
+import { CfnEventBusPolicy, EventBus, Rule } from "aws-cdk-lib/aws-events";
 import {
   Code,
   Runtime,
@@ -23,78 +22,43 @@ import { join } from "path";
 import {
   AttributeType,
   ProjectionType,
-  StreamViewType,
   Table,
   TableEncryption,
 } from "aws-cdk-lib/aws-dynamodb";
-
-import config = require("config");
+//import { IConfig } from '../utils/config'
+const config = require("config");
 import dynamodb = require("aws-sdk/clients/dynamodb");
+import { getDefaultBus, generateDLQ, generateQueue } from "./commons";
 
 export class EventForwarderStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
+    const eventBus = getDefaultBus(this, config.get('region'), config.get('account') );
+
     const stackEventsRule = new Rule(this, "stack-events-rule", {
       eventPattern: {
-        // detail: {
-        //   object: {
-        //     // Matchers may appear at any level
-        //     size: events.Match.greaterThan(1024),
-        //   },
-
-        //   // 'OR' condition
-        //   "source-storage-class": events.Match.anyOf(
-        //     events.Match.prefix("GLACIER"),
-        //     events.Match.exactString("DEEP_ARCHIVE")
-        //   ),
-        // },
+        detail: {
+          "stack-id": [{ exists: true }],
+        },
         source: ["aws.cloudformation"],
       },
+      eventBus,
     });
 
-    const dlqQueueProps = {
-      retentionPeriod: Duration.days(7),
-      removalPolicy: RemovalPolicy.DESTROY,
-    };
-
-    const generateDLQ = (queueName: string) => {
-      return new Queue(this, queueName, {
-        ...dlqQueueProps,
-        queueName,
-      });
-    };
-
-    const normalQueueProps = {
-      retentionPeriod: Duration.days(1),
-      removalPolicy: RemovalPolicy.DESTROY,
-      deliveryDelay: Duration.seconds(3),
-      visibilityTimeout: Duration.minutes(1),
-    };
-
-    const generateQueue = (
-      queueName: string,
-      deadLetterQueue: DeadLetterQueue
-    ) => {
-      return new Queue(this, queueName, {
-        ...normalQueueProps,
-        queueName,
-        deadLetterQueue,
-      });
-    };
-
     const stackEventProcessorQueueDLQ: DeadLetterQueue = {
-      queue: generateDLQ("stackEventProcessorQueueDLQ"),
+      queue: generateDLQ(this, "stackEventProcessorQueueDLQ"),
       maxReceiveCount: 100,
     };
 
     const stackEventProcessorQueue = generateQueue(
+      this,
       "stackEventProcessorQueue",
       stackEventProcessorQueueDLQ
     );
 
     const stackEventTargetDLQ: DeadLetterQueue = {
-      queue: generateDLQ("stackEventTargetDLQ"),
+      queue: generateDLQ(this, "stackEventTargetDLQ"),
       maxReceiveCount: 100,
     };
 
@@ -127,7 +91,7 @@ export class EventForwarderStack extends Stack {
         name: "type",
         type: AttributeType.STRING,
       },
-      nonKeyAttributes: ["time","detail", "status", "notified"],
+      nonKeyAttributes: ["time", "detail", "status", "notified"],
       projectionType: ProjectionType.INCLUDE,
     });
 
@@ -137,7 +101,7 @@ export class EventForwarderStack extends Stack {
         name: "status",
         type: AttributeType.STRING,
       },
-      nonKeyAttributes: ["time","detail", "type", "notified"],
+      nonKeyAttributes: ["time", "detail", "type", "notified"],
       projectionType: ProjectionType.INCLUDE,
     });
 
@@ -147,7 +111,18 @@ export class EventForwarderStack extends Stack {
         name: "notified",
         type: AttributeType.STRING,
       },
-      nonKeyAttributes: ["time","detail", "type","status","statusReason","resourceType", "logicalResourceId", "physicalResourceId", "detectionStatus", "driftDetectionDetails"],
+      nonKeyAttributes: [
+        "time",
+        "detail",
+        "type",
+        "status",
+        "statusReason",
+        "resourceType",
+        "logicalResourceId",
+        "physicalResourceId",
+        "detectionStatus",
+        "driftDetectionDetails",
+      ],
       projectionType: ProjectionType.INCLUDE,
     });
 
@@ -157,7 +132,7 @@ export class EventForwarderStack extends Stack {
         name: "eventId",
         type: AttributeType.STRING,
       },
-      nonKeyAttributes: ["stackId","time","type","detail", "status"],
+      nonKeyAttributes: ["stackId", "time", "type", "detail", "status"],
       projectionType: ProjectionType.INCLUDE,
       readCapacity: 5,
       // sortKey: {

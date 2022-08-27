@@ -1,6 +1,8 @@
 {
     "account": "123",
-    "region": "us-east-1",
+    "region": "ap-south-1",
     "slackhook": "",
-    "eventStore": "eventStore"
+    "eventStore": "eventStores9",
+    "remoteRegions":"us-east-1,us-east-2",
+    "remoteAccounts":"123"
 }

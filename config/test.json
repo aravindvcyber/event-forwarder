@@ -1,5 +1,7 @@
 {
     "account": "123",
     "region": "us-east-1",
-    "slackhook": ""
+    "slackhook": "slackhook",
+    "remoteRegions":"us-east-1,us-east-2",
+    "remoteAccounts":"123,123"
 }
