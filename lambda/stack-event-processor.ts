@@ -105,7 +105,7 @@ const handle = async function (event: SQSEvent) {
 
         keyPairList.push({ PK: item.stackId.S, SK: item.time.N });
 
-        collection.push(generateInnerSection(item));
+        collection.push(generateInnerSection(item, region));
       });
     }
 

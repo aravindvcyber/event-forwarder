@@ -11,3 +11,4 @@ config/production.json
 dist/
 lambda/stack-event-processor.spec.ts
 .DS_Store
+lambda/stack-event-processor.test.ts
