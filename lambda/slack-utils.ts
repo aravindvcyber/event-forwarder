@@ -302,7 +302,7 @@ export function stackEventMessageComposer(
     elements: [...payload],
   };
   const blocks: Array<KnownBlock | Block> = [header, divider, contentSection];
-  if (index === chunks) {
+  if (index === chunks && status != 'DELETE_COMPLETE') {
     blocks.push(divider);
     blocks.push(stackBlock);
     blocks.push(driftsBlock);

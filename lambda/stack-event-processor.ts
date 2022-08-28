@@ -158,12 +158,7 @@ const handle = async function (event: SQSEvent) {
           Promise.all(chunks.map(async(chunk)=> await sendUsingSlackHook(chunk)));
           logger.info("sentToSlack");
           chunks=[];
-          //
         }
-        // tracer.putAnnotation("sendingSlackPost", true);
-        // logger.info("sendingToSlack");
-        // Promise.all(chunks.map(async(chunk)=> await sendUsingSlackHook(chunk)));
-        // logger.info("sentToSlack");
 
         const keys = keyPairList.map((key)=>{
           return genCustomTableKey(key);
