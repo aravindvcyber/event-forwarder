@@ -152,6 +152,72 @@ Never miss anything happening to your cloud formation stacks since you will be a
 
 ![create/update 3](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/cdggdp9wvpr28wjnx5t9.png)
 
+### Even exception in this stack
+
+This can be directly reported to the maintainers without waiting to dig into the cloudwatch logs to identify and track the issue.
+
+![error notification to admin via slack post](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/f2pg8pcv1hav2gf7boil.png)
+
 And all these cool things about this slack post it is having a rich format that could be customized at the source and it also include a deep link to the resources provisioned besides the stack-level links to various console screens.
 
 > Note these console links will only work if you have already logged into your respective AWS account in the browser where you open them and if you have the necessary privileges make sure that security even for production environments is honored when you share this across various members of your teams for any follow ups in any slack threads.
+
+
+## Dynamodb to store data
+
+Here in this article, we choose to use dynamodb not only as an ad-hoc data store. I believe the data generated will trigger further insights and expand the possibilities of this solution.
+
+### Indexes created for critical data lookups
+
+![rich indexes](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/or2mxqgomg2jxewpsj4k.png)
+
+### Sample DB item
+
+```json
+{
+ "stackId": "arn:aws:cloudformation:ap-south-1:575066707855:stack/EventForwarderStack/279c3120-1f91-11ed-a6ef-022d5cdd6444",
+ "time": 1661700649000,
+ "account": "575066707855",
+ "clientRequestToken": "",
+ "detail": "{\"stack-id\":\"arn:aws:cloudformation:ap-south-1:575066707855:stack/EventForwarderStack/279c3120-1f91-11ed-a6ef-022d5cdd6444\",\"stack-drift-detection-id\":\"651434b0-26e6-11ed-817d-06bb5d2f96a6\",\"status-details\":{\"stack-drift-status\":\"\",\"detection-status\":\"DETECTION_IN_PROGRESS\"},\"drift-detection-details\":{\"drifted-stack-resource-count\":-1}}",
+ "detectionStatus": "DETECTION_IN_PROGRESS",
+ "driftDetectionDetails": "{\"drifted-stack-resource-count\":-1}",
+ "eventId": "2892c708-d38d-9a9a-115e-c981c1d3d62f",
+ "logicalResourceId": "",
+ "notified": "false",
+ "notifiedTime": 1661700651498,
+ "physicalResourceId": "",
+ "region": "ap-south-1",
+ "resources": [
+  "arn:aws:cloudformation:ap-south-1:575066707855:stack/EventForwarderStack/279c3120-1f91-11ed-a6ef-022d5cdd6444"
+ ],
+ "resourceType": "",
+ "status": "DETECTION_IN_PROGRESS",
+ "statusReason": "",
+ "type": "CloudFormation Drift Detection Status Change"
+}
+```
+
+This project is open to your generous contributions if you feel it will help other developers and also you could also solve the issues or bring new features with a Pull request.
+
+[event-forwarder Github repo](https://github.com/aravindvcyber/event-forwarder/)
+
+⏭ We have our next article in serverless, do check out
+
+If in case missed my previous article, do find it with the below links.
+
+🔁 Original previous series post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-typescript)
+
+🔁 Reposted the previous series post at 🔗 [dev to @aravindvcyber](https://dev.to/aravindvcyber/series/17111)
+
+🎉 Thanks for supporting! 🙏
+
+Would be great if you like to [☕ Buy Me a Coffee](https://www.buymeacoffee.com/AravindVCyber), to help boost my efforts 😍.
+
+<a href="https://www.buymeacoffee.com/AravindVCyber"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=AravindVCyber&button_colour=BD5FFF&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00" /></a>
+
+<a href='https://ko-fi.com/X8X0CITDJ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi4.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+🔁 Original post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-graphql-mutations-using-appsync-with-dynamodb)
+
+🔁 Reposted at 🔗 [dev to @aravindvcyber](https://dev.to/aravindvcyber/aws-cdk-101-graphql-mutations-using-appsync-with-dynamodb-9n0)
