@@ -14,12 +14,17 @@ import {
   QueryOutput,
   UpdateItemOutput,
   UpdateItemInput,
+  BatchWriteItemInput,
+  WriteRequest,
+  BatchWriteItemRequestMap,
 } from "aws-sdk/clients/dynamodb";
 
 import { CloudformationEventDbModel } from "./model";
 import { logger } from "./stack-event-processor";
 
 const dynamo: DynamoDB = new AWS.DynamoDB();
+
+const tableName: string = process.env.EVENT_STORE || "";
 
 const dynamodbQueryPagingLimit: number = parseInt(
   process.env.DYNAMODB_QUERY_PAGING_LIMIT || "10"
@@ -30,7 +35,7 @@ export const dbPut: any = async (event: CloudformationEventDbModel) => {
     ...event,
   };
   const putData: PutItemInput = {
-    TableName: process.env.EVENT_STORE || "",
+    TableName: tableName,
     Item: item,
     ReturnConsumedCapacity: "TOTAL",
   };
@@ -45,18 +50,6 @@ export const batchGetDbItems = async (
 ): Promise<BatchGetItemOutput> => {
   logger.info("Getting: ", { keys });
 
-  // const writeItems: ReadRequest[] = [];
-  // keys.map((key: any) => {
-  //   const writeItem: WriteRequest = {
-  //     DeleteRequest: {
-  //       Key: {
-  //         ...key,
-  //       },
-  //     },
-  //   };
-  //   writeItems.push(writeItem);
-  // });
-
   const keyList: KeyList = keys.map((key: string) => {
     return {
       stackId: { S: key },
@@ -66,18 +59,10 @@ export const batchGetDbItems = async (
     };
   });
 
-  // const exprAttrNameMap: ExpressionAttributeNameMap = [{
-
-  // }]
-
   const requestKeyAttr: KeysAndAttributes = {
     ConsistentRead: true,
     Keys: keyList,
-    //ProjectionExpression: ""
-    //ExpressionAttributeNames: exprAttrNameMap
   };
-
-  const tableName: string = process.env.EVENT_STORE || "";
 
   const getRequestMap: BatchGetRequestMap = {
     tableName: requestKeyAttr,
@@ -118,13 +103,36 @@ export const queryAllDbItems = async (
   return result;
 };
 
+export const batchDeleteDbItems = async (keys: DynamoDB.Key[]) => {
+  logger.info("Deleting: ", { keys });
+
+  const writeItems: WriteRequest[] = [];
+  keys.map((key: DynamoDB.Key) => {
+    const writeItem: WriteRequest = {
+      DeleteRequest: {
+        Key: key,
+      },
+    };
+    writeItems.push(writeItem);
+  });
+  let writeRequestMap: BatchWriteItemRequestMap = {};
+  writeRequestMap[tableName] = writeItems;
+  const params: BatchWriteItemInput = {
+    RequestItems: writeRequestMap,
+    ReturnConsumedCapacity: "TOTAL",
+    ReturnItemCollectionMetrics: "SIZE",
+  };
+
+  logger.info("deleteItem: ", { params });
+
+  return await dynamo.batchWriteItem(params).promise();
+};
+
 export const queryDbItems = async (
   key: string,
   fromKey?: DynamoDB.Key
 ): Promise<QueryOutput> => {
   logger.info("queryDbItems: ", { key, fromKey });
-
-  const tableName: string = process.env.EVENT_STORE || "";
 
   const params: QueryInput = {
     ReturnConsumedCapacity: "TOTAL",
@@ -163,35 +171,25 @@ export const queryDbItems = async (
 };
 
 export const updateDbItem = async (
-  PK: string,
-  SK: string
+  key: DynamoDB.Key
 ): Promise<UpdateItemOutput> => {
-  logger.info("Updating: ", { PK, SK });
-
-  const tableName: string = process.env.EVENT_STORE || "";
+  logger.info("Updating: ", { key });
 
   const params: UpdateItemInput = {
     ReturnConsumedCapacity: "TOTAL",
     TableName: tableName,
-    Key: {
-      stackId: { S: PK },
-      time: { N: `${SK}` },
-    },
+    Key: key,
 
     UpdateExpression: "SET #ny = :new , #nyt = :time",
 
     ConditionExpression: "#ny = :old",
 
     ExpressionAttributeNames: {
-      //'#si': "stackId",
-      //'#ti' : "time",
       "#ny": "notified",
       "#nyt": "notifiedTime",
     },
 
     ExpressionAttributeValues: {
-      //':s': {S: PK},
-      //':t' : {N: `${timeFrom}`},
       ":old": { S: "false" },
       ":new": { S: "true" },
       ":time": { N: `${new Date().getTime()}` },

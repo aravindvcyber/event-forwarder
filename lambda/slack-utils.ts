@@ -159,7 +159,7 @@ export function mrkdwnLink(
 export function errorMessageComposer(
   payload: Array<MrkdwnElement>
 ): Array<Block | KnownBlock> {
-  const title: string = `:siren: An unhandled exception occurred in EventForwarderHandler `;
+  const title: string = `:red_circle: An unhandled exception occurred in EventForwarderHandler `;
   const header: HeaderBlock = {
     type: "header",
     text: {
@@ -185,7 +185,7 @@ export function stackEventMessageComposer(
   chunks: number,
   status: string
 ): Array<Block | KnownBlock> {
-  const title: string = `:four_leaf_clover: ${
+  const title: string = `:construction: ${
     stackId.split("/")[1]
   } events from ${region} for account ${account} page ${index}/${chunks} on ${status}`;
   const header: HeaderBlock = {
@@ -276,11 +276,11 @@ export function stackEventMessageComposer(
     },
   };
 
-  const AppBlock: SectionBlock = {
+  const AppManagerResourcesBlock: SectionBlock = {
     type: "section",
     text: generateItemTemplate(
       "mrkdwn",
-      ":chart: <" +
+      ":four_leaf_clover: <" +
         AppManagerResourcesLink +
         "|Application Manager Resources>"
     ),
@@ -307,6 +307,7 @@ export function stackEventMessageComposer(
     blocks.push(stackBlock);
     blocks.push(driftsBlock);
     blocks.push(cfnDesignerBlock);
+    blocks.push(AppManagerResourcesBlock);
   }
   return blocks;
 }
@@ -324,7 +325,8 @@ export async function sendUsingSlackHook(blocks: Array<KnownBlock | Block>) {
     const response: IncomingWebhookResult = await slackHook.send(message);
     logger.info({ response });
   } catch (error) {
-    logger.info({ error });
+    logger.info({ slackError: error });
+    throw error
   }
 }
 
@@ -343,6 +345,6 @@ export async function sendUsingErrorSlackHook(
     const response: IncomingWebhookResult = await errorSlackHook.send(message);
     logger.info({ response });
   } catch (error) {
-    logger.info({ error });
+    logger.info({ slackError: error });
   }
 }

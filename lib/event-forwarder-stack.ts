@@ -179,6 +179,7 @@ export class EventForwarderStack extends Stack {
         LOG_LEVEL: config.get("logLevel"),
         PER_POST_Event_Count: config.get("perPostEventCount"),
         DYNAMODB_QUERY_PAGING_LIMIT: config.get("dynamodbQueryPagingLimit"),
+        DELETE_NOTIFIED: config.get("deleteNotified")
       },
     });
 

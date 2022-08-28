@@ -9,5 +9,6 @@
     "logLevel":"WARN",
     "perPostEventCount": "10",
     "dynamodbQueryPagingLimit": "15",
-    "logRetentionDays": "14"
+    "logRetentionDays": "14",
+    "deleteNotified": "false"
 }

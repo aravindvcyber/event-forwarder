@@ -17,8 +17,8 @@ export const getDefaultBus = (scope: Construct, region:string, account:string): 
 export const normalQueueProps = {
   retentionPeriod: Duration.days(1),
   removalPolicy: RemovalPolicy.DESTROY,
-  deliveryDelay: Duration.seconds(3),
-  visibilityTimeout: Duration.minutes(1),
+  deliveryDelay: Duration.seconds(1),
+  visibilityTimeout: Duration.minutes(3),
 };
 
 export const generateDLQ = (scope: Construct, queueName: string): Queue => {

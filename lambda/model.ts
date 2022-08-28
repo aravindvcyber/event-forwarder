@@ -110,3 +110,10 @@ export function timeOrder(
   }
   return 0;
 }
+
+export function genCustomTableKey(key: { PK: string; SK: string }) {
+  return {
+    stackId: { S: key.PK },
+    time: { N: `${key.SK}` },
+  }
+}

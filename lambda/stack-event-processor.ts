@@ -18,9 +18,14 @@ import {
   CloudFormationStackEventBridgeEvent,
   CloudFormationStackEventBridgeEvents,
 } from "./cfn-events";
-import { dbPut, queryAllDbItems, updateDbItem } from "./dynamodb-utils";
-import { CloudformationEventDbModel, timeOrder, toDataModel } from "./model";
-import { AttributeMap, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
+import {
+  batchDeleteDbItems,
+  dbPut,
+  queryAllDbItems,
+  updateDbItem,
+} from "./dynamodb-utils";
+import { CloudformationEventDbModel, genCustomTableKey, timeOrder, toDataModel } from "./model";
+import { AttributeMap, BatchWriteItemOutput, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
 import DynamoDB = require("aws-sdk/clients/dynamodb");
 
 const middy = require("@middy/core");
@@ -42,6 +47,8 @@ export const logger = new Logger({
     version: "1",
   },
 });
+
+const deleteNotified = process.env.DELETE_NOTIFIED || "false";
 
 const tracer = new Tracer({ serviceName: "EventForwarderHandler" });
 
@@ -76,9 +83,7 @@ const handle = async function (event: SQSEvent) {
           /^((CREATE|UPDATE|DELETE)_COMPLETE|UPDATE_ROLLBACK_COMP)$/
         );
 
-        const driftMatchList = dbContent.status.S.match(
-          /^DRIFTED$/
-        );
+        const driftMatchList = dbContent.status.S.match(/^(DRIFTED|IN_SYNC)$/);
 
         logger.info("statusMatchList", {
           statusMatchList,
@@ -87,8 +92,9 @@ const handle = async function (event: SQSEvent) {
         if (
           (dbContent.type.S ===
             CloudFormationStackEventBridgeEvent.Stack_Change &&
-          statusMatchList &&
-          statusMatchList.length > 0) || (dbContent.type.S ===
+            statusMatchList &&
+            statusMatchList.length > 0) ||
+          (dbContent.type.S ===
             CloudFormationStackEventBridgeEvent.Drift_Detection_Change &&
             driftMatchList &&
             driftMatchList.length > 0)
@@ -130,7 +136,7 @@ const handle = async function (event: SQSEvent) {
         });
       }
 
-      tracer.putAnnotation("sendingSlackPost", true);
+      let chunks =[];
 
       if (collection.length > 0) {
         const chunkSize = parseInt(process.env.PER_POST_Event_Count || "10");
@@ -146,20 +152,45 @@ const handle = async function (event: SQSEvent) {
               Math.round(collection.length / chunkSize + 1),
               status
             );
-          await sendUsingSlackHook(messageBlocks);
+            tracer.putAnnotation("sendingSlackPost", true);
+            logger.info("sendingToSlack");
+            chunks.push(messageBlocks);
+          Promise.all(chunks.map(async(chunk)=> await sendUsingSlackHook(chunk)));
+          logger.info("sentToSlack");
+          chunks=[];
+          //
+        }
+        // tracer.putAnnotation("sendingSlackPost", true);
+        // logger.info("sendingToSlack");
+        // Promise.all(chunks.map(async(chunk)=> await sendUsingSlackHook(chunk)));
+        // logger.info("sentToSlack");
+
+        const keys = keyPairList.map((key)=>{
+          return genCustomTableKey(key);
+        });
+  
+        if (deleteNotified === "true") {
+          tracer.putAnnotation("deletingNotifiedField", true);
+  
+          logger.info("keys:", { keys });
+  
+          const out: any = await batchDeleteDbItems(keys);
+  
+          logger.info("DeleteItemOutput", { out });
+        } else {
+          tracer.putAnnotation("updatingNotifiedField", true);
+  
+          logger.info("keys:", { keys });
+  
+          await Promise.all(
+            keys.map(async (key) => {
+              const out: UpdateItemOutput = await updateDbItem(key);
+              logger.info("UpdateItemOutput", { out });
+            })
+          );
         }
       }
-
-      tracer.putAnnotation("updatingNotifiedField", true);
-
-      logger.info("KeyPairList:", { keyPairList });
-
-      await Promise.all(
-        keyPairList.map(async ({ PK, SK }) => {
-          const out: UpdateItemOutput = await updateDbItem(PK, SK);
-          logger.info("UpdateItemOutput", { out });
-        })
-      );
+      
     } else {
       logger.info("No Stack Completed", { event });
     }
@@ -181,11 +212,11 @@ const handle = async function (event: SQSEvent) {
     ]);
     await sendUsingErrorSlackHook(messageBlocks);
     return {
-      statusCode: 400,
+      statusCode: 200,
       headers: { "Content-Type": "text/json" },
       body: {
         EventsReceived: [...event.Records].length,
-        Error: error
+        Error: error,
       },
     };
   }
