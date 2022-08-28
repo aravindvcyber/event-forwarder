@@ -16,11 +16,14 @@ import {
   UpdateItemInput,
 } from "aws-sdk/clients/dynamodb";
 
-
 import { CloudformationEventDbModel } from "./model";
 import { logger } from "./stack-event-processor";
 
 const dynamo: DynamoDB = new AWS.DynamoDB();
+
+const dynamodbQueryPagingLimit: number = parseInt(
+  process.env.DYNAMODB_QUERY_PAGING_LIMIT || "10"
+);
 
 export const dbPut: any = async (event: CloudformationEventDbModel) => {
   const item: PutItemInputAttributeMap = {
@@ -37,7 +40,9 @@ export const dbPut: any = async (event: CloudformationEventDbModel) => {
   await dynamo.putItem(putData).promise();
 };
 
-export const batchGetDbItems = async (keys: string[]): Promise<BatchGetItemOutput> => {
+export const batchGetDbItems = async (
+  keys: string[]
+): Promise<BatchGetItemOutput> => {
   logger.info("Getting: ", { keys });
 
   // const writeItems: ReadRequest[] = [];
@@ -53,9 +58,12 @@ export const batchGetDbItems = async (keys: string[]): Promise<BatchGetItemOutpu
   // });
 
   const keyList: KeyList = keys.map((key: string) => {
-    return { "stackId": {S: key}, "time": {
-      N: "1660908358000"
-     } };
+    return {
+      stackId: { S: key },
+      time: {
+        N: "1660908358000",
+      },
+    };
   });
 
   // const exprAttrNameMap: ExpressionAttributeNameMap = [{
@@ -69,11 +77,11 @@ export const batchGetDbItems = async (keys: string[]): Promise<BatchGetItemOutpu
     //ExpressionAttributeNames: exprAttrNameMap
   };
 
-  const tableName: string = process.env.EVENT_STORE || '';
+  const tableName: string = process.env.EVENT_STORE || "";
 
   const getRequestMap: BatchGetRequestMap = {
     tableName: requestKeyAttr,
-  }
+  };
   const params: BatchGetItemInput = {
     RequestItems: getRequestMap,
     ReturnConsumedCapacity: "TOTAL",
@@ -90,65 +98,58 @@ export const batchGetDbItems = async (keys: string[]): Promise<BatchGetItemOutpu
   return result;
 };
 
-export const queryDbItems = async (key: string): Promise<QueryOutput> => {
-  logger.info("Getting: ", { key });
+export const queryAllDbItems = async (
+  key: string
+): Promise<DynamoDB.ItemList> => {
+  logger.info("queryAllDbItems: ", { key });
 
-  // const writeItems: ReadRequest[] = [];
-  // keys.map((key: any) => {
-  //   const writeItem: WriteRequest = {
-  //     DeleteRequest: {
-  //       Key: {
-  //         ...key,
-  //       },
-  //     },
-  //   };
-  //   writeItems.push(writeItem);
-  // });
+  let lastEvaluatedKey: DynamoDB.Key | undefined = undefined;
 
-  // const keyList: KeyList = keys.map((key: string) => {
-  //   return { "stackId": {S: key}, "time": {
-  //     N: "1660908358000"
-  //    } };
-  // });
+  let result: DynamoDB.ItemList = [];
 
-  const tableName: string = process.env.EVENT_STORE || '';
+  do {
+    const partOutput: QueryOutput = await queryDbItems(key, lastEvaluatedKey);
+    lastEvaluatedKey = partOutput.LastEvaluatedKey;
+    logger.info("partOutput: ", { partOutput });
+    if (partOutput.Items) {
+      result = result.concat(partOutput.Items);
+    }
+  } while (lastEvaluatedKey);
+  return result;
+};
 
-  //const currTime: number = new Date().getTime();
+export const queryDbItems = async (
+  key: string,
+  fromKey?: DynamoDB.Key
+): Promise<QueryOutput> => {
+  logger.info("queryDbItems: ", { key, fromKey });
 
-  //const timeFrom: number = new Date(currTime - 1000*60*60).getTime()
+  const tableName: string = process.env.EVENT_STORE || "";
 
-  
   const params: QueryInput = {
     ReturnConsumedCapacity: "TOTAL",
     TableName: tableName,
-    IndexName: 'LSI_NOTIFIED',  
-    Limit: 10,
-    
+    IndexName: "LSI_NOTIFIED",
+    Limit: dynamodbQueryPagingLimit,
+
     ConsistentRead: true,
-   
-    //ScanIndexForward?: BooleanObject;
-  
-    // ExclusiveStartKey?: Key;
-  
-    //ProjectionExpression?: ProjectionExpression;
-  
-    //FilterExpression?: ConditionExpression;
-   
-    //KeyConditionExpression: "#si = :s and #ti < :t and #ny = :n",
+
     KeyConditionExpression: "#si = :s and #ny = :n",
-   
+
     ExpressionAttributeNames: {
-      '#si': "stackId",
-      //'#ti' : "time",
-      '#ny' : "notified",
+      "#si": "stackId",
+      "#ny": "notified",
     },
-    
+
     ExpressionAttributeValues: {
-      ':s': {S: key},
-      //':t' : {N: `${timeFrom}`},
-      ':n': {S: "false"},
+      ":s": { S: key },
+      ":n": { S: "false" },
     },
   };
+
+  if (fromKey) {
+    params.ExclusiveStartKey = fromKey;
+  }
 
   logger.info("GetItem: ", { params });
   let result: QueryOutput = {};
@@ -161,58 +162,39 @@ export const queryDbItems = async (key: string): Promise<QueryOutput> => {
   return result;
 };
 
-
-export const updateDbItem = async (PK: string, SK: string ): Promise<UpdateItemOutput> => {
+export const updateDbItem = async (
+  PK: string,
+  SK: string
+): Promise<UpdateItemOutput> => {
   logger.info("Updating: ", { PK, SK });
 
-  // const writeItems: ReadRequest[] = [];
-  // keys.map((key: any) => {
-  //   const writeItem: WriteRequest = {
-  //     DeleteRequest: {
-  //       Key: {
-  //         ...key,
-  //       },
-  //     },
-  //   };
-  //   writeItems.push(writeItem);
-  // });
+  const tableName: string = process.env.EVENT_STORE || "";
 
-  // const keyList: KeyList = keys.map((key: string) => {
-  //   return { "stackId": {S: key}, "time": {
-  //     N: "1660908358000"
-  //    } };
-  // });
-
-  const tableName: string = process.env.EVENT_STORE || '';
-
-  //const currTime: number = new Date().getTime();
-
-  //const timeFrom: number = new Date(currTime - 1000*60*60).getTime()
-
-  
   const params: UpdateItemInput = {
     ReturnConsumedCapacity: "TOTAL",
     TableName: tableName,
     Key: {
-      "stackId": {S: PK},
-      "time": {N: `${SK}`}
+      stackId: { S: PK },
+      time: { N: `${SK}` },
     },
 
-    UpdateExpression: "SET #ny = :new",
-    
+    UpdateExpression: "SET #ny = :new , #nyt = :time",
+
     ConditionExpression: "#ny = :old",
-   
+
     ExpressionAttributeNames: {
       //'#si': "stackId",
       //'#ti' : "time",
-      '#ny' : "notified",
+      "#ny": "notified",
+      "#nyt": "notifiedTime",
     },
-    
+
     ExpressionAttributeValues: {
       //':s': {S: PK},
       //':t' : {N: `${timeFrom}`},
-      ':old': {S: "false"},
-      ':new': {S: "true"},
+      ":old": { S: "false" },
+      ":new": { S: "true" },
+      ":time": { N: `${new Date().getTime()}` },
     },
   };
 

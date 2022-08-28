@@ -3,4 +3,5 @@ export default interface IConfig {
   region: string
   slackhook: string
   eventStore: string
+  logLevel: string
 }

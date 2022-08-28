@@ -2,7 +2,12 @@
     "account": "123",
     "region": "ap-south-1",
     "slackhook": "",
+    "errorslackhook": "",
     "eventStore": "eventStores9",
     "remoteRegions":"us-east-1,us-east-2",
-    "remoteAccounts":"123"
+    "remoteAccounts":"123",
+    "logLevel":"WARN",
+    "perPostEventCount": "10",
+    "dynamodbQueryPagingLimit": "15",
+    "logRetentionDays": "14"
 }

@@ -14,7 +14,7 @@ import {
   Tracing,
 } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
-import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { DeadLetterQueue, Queue } from "aws-cdk-lib/aws-sqs";
 
 import { Construct } from "constructs";
@@ -28,7 +28,7 @@ import {
 //import { IConfig } from '../utils/config'
 const config = require("config");
 import dynamodb = require("aws-sdk/clients/dynamodb");
-import { getDefaultBus, generateDLQ, generateQueue } from "./commons";
+import { getDefaultBus, generateDLQ, generateQueue, generateQueueFifo, generateDLQFifo } from "./commons";
 
 export class EventForwarderStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -46,10 +46,21 @@ export class EventForwarderStack extends Stack {
       eventBus,
     });
 
+    // const stackEventProcessorQueueDLQ: DeadLetterQueue = {
+    //   queue: generateDLQFifo(this, "stackEventProcessorQueueDLQ.fifo"),
+    //   maxReceiveCount: 100,
+    // };
+
     const stackEventProcessorQueueDLQ: DeadLetterQueue = {
       queue: generateDLQ(this, "stackEventProcessorQueueDLQ"),
       maxReceiveCount: 100,
     };
+
+    // const stackEventProcessorQueue = generateQueueFifo(
+    //   this,
+    //   "stackEventProcessorQueue.fifo",
+    //   stackEventProcessorQueueDLQ
+    // );
 
     const stackEventProcessorQueue = generateQueue(
       this,
@@ -158,12 +169,16 @@ export class EventForwarderStack extends Stack {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset("dist/lambda/stack-event-processor"),
       handler: "stack-event-processor.handler",
-      logRetention: RetentionDays.ONE_MONTH,
+      logRetention: parseInt(config.get("logRetentionDays")) || RetentionDays.ONE_DAY,
       layers: [external],
       tracing: Tracing.ACTIVE,
       environment: {
         SLACK_HOOK: config.get("slackhook"),
+        ERROR_SLACK_HOOK: config.get("errorslackhook"),
         EVENT_STORE: eventStoreTableName,
+        LOG_LEVEL: config.get("logLevel"),
+        PER_POST_Event_Count: config.get("perPostEventCount"),
+        DYNAMODB_QUERY_PAGING_LIMIT: config.get("dynamodbQueryPagingLimit"),
       },
     });
 

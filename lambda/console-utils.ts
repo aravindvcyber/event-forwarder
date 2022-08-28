@@ -4,12 +4,19 @@ export const generateResourceLink = (
   physicalId: string
 ): string => {
   const encodedId: string = encodeURIComponent(physicalId);
+  const stackName: string = physicalId.split('/')[1];
+
   const baseUrl = `https://${region}.console.aws.amazon.com/`;
 
   if (resourceType === "AWS::Events::Rule") {
     return baseUrl + `events/home?region=${region}#/rules/${encodedId}`;
   } else if (resourceType === "AWS::Lambda::Function") {
     return baseUrl + `lambda/home?region=${region}#functions/${encodedId}`;
+  } else if (resourceType === "logGroup") {
+    return (
+      baseUrl +
+      `cloudwatch/home?region=${region}#logsV2:log-groups/log-group/${encodedId}`
+    );
   } else if (resourceType === "AWS::DynamoDB::Table") {
     return (
       baseUrl + `dynamodb/home?region=${region}#tables:selected=${encodedId}`
@@ -23,7 +30,18 @@ export const generateResourceLink = (
     return (
       baseUrl + `cloudformation/home?region=${region}&stackId=${encodedId}`
     );
+  } else if (resourceType === "driftsLink") {
+    return (
+      baseUrl +
+      `cloudformation/home?region=${region}#/stacks/drifts?stackId=${encodedId}`
+    );
+  } else if (resourceType === "AppManagerResourcesLink") {
+    return (
+      baseUrl +
+      `systems-manager/appmanager/application/AppManager-CFN-${stackName}?region=${region}&tab=AppManagerApplicationResourcesTab`
+    );
   } else {
     return physicalId;
   }
 };
+

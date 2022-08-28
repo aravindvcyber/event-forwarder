@@ -28,6 +28,14 @@ export const generateDLQ = (scope: Construct, queueName: string): Queue => {
   });
 };
 
+export const generateDLQFifo = (scope: Construct, queueName: string): Queue => {
+  return new Queue(scope, queueName, {
+    ...dlqQueueProps,
+    queueName,
+    fifo: true
+  });
+};
+
 export const generateQueue = (
   scope: Construct,
   queueName: string,
@@ -37,5 +45,18 @@ export const generateQueue = (
     ...normalQueueProps,
     queueName,
     deadLetterQueue,
+  });
+};
+
+export const generateQueueFifo = (
+  scope: Construct,
+  queueName: string,
+  deadLetterQueue: DeadLetterQueue
+): Queue => {
+  return new Queue(scope, queueName, {
+    ...normalQueueProps,
+    queueName,
+    deadLetterQueue,
+    fifo: true
   });
 };

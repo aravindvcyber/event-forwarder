@@ -24,6 +24,7 @@ export interface CloudformationEventDbModel {
   detectionStatus: { S: string };
   driftDetectionDetails: { S: string };
   notified: { S: string };
+  notifiedTime: { N: string };
 }
 
 export const toDataModel = (
@@ -36,6 +37,7 @@ export const toDataModel = (
   const type: { S: string } = { S: event["detail-type"] };
   const status: { S: string } = { S: "" };
   const notified: { S: string } = { S: "false" };
+  const notifiedTime: { N: string } = { N: `${new Date().getTime()}` };
   const statusReason: { S: string } = { S: "" };
   const detectionStatus: { S: string } = { S: "" };
   const resourceType: { S: string } = { S: "" };
@@ -90,6 +92,7 @@ export const toDataModel = (
     detectionStatus,
     driftDetectionDetails,
     notified,
+    notifiedTime,
   };
 
   return result;
