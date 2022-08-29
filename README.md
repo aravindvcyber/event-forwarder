@@ -4,6 +4,10 @@ Basically, I named this to stress the fact that we would be routing and consumin
 
 **Note:** I have published the initial blog of this, highly recommended to check that out first before you try to do hands on.
 
+🔁 Original post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder)
+
+🔁 Reposted at 🔗 [dev to @aravindvcyber](https://dev.to/aws-builders/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder-1m0m)
+
 I believe a lot of use cases will come soon for now I am starting with the below one.
 
 > Starting with Cloudformation events to post Slack notifications effortless from multi-region and even cross accounts to never miss your/peers/ci initiated AWS cloudformation deployments on stacks and resources besides that it could also notify drift events.
@@ -235,6 +239,6 @@ Would be great if you like to [☕ Buy Me a Coffee](https://www.buymeacoffee.com
 
 <a href='https://ko-fi.com/X8X0CITDJ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi4.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
-🔁 Original post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-graphql-mutations-using-appsync-with-dynamodb)
+🔁 Original post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder)
 
-🔁 Reposted at 🔗 [dev to @aravindvcyber](https://dev.to/aravindvcyber/aws-cdk-101-graphql-mutations-using-appsync-with-dynamodb-9n0)
+🔁 Reposted at 🔗 [dev to @aravindvcyber](https://dev.to/aws-builders/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder-1m0m)
