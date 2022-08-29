@@ -1,37 +1,44 @@
-# Welcome to the Event Forwarder Project, a lot of use cases will come soon.
+# Event Forwarder :roller_coaster:
+
+Basically, I named this to stress the fact that we would be routing and consuming various aws event bridge events (especially the newly available AWS cloud formation events) to various channels which would help developers and teams effortlessly track and monitor the deployments happening in a multi-region and multi-account ecosystem.
+
+**Note:** I have published the initial blog of this, highly recommended to check that out first before you try to do hands on.
+
+I believe a lot of use cases will come soon for now I am starting with the below one.
 
 > Starting with Cloudformation events to post Slack notifications effortless from multi-region and even cross accounts to never miss your/peers/ci initiated AWS cloudformation deployments on stacks and resources besides that it could also notify drift events.
 
-Basically, I named this to stress the fact that we would be consuming various aws event bridge events (especially the newly available AWS cloud formation events) to various channels which would help developers and teams effortlessly track and monitor the deployments happening in a multi-region and multi-account ecosystem.
-
-I have especially used Slack as the first delivery channel since it is quite common in organizations and free to set up workspace even for an amateur developer. At the same time, we are not trying to limit the possibilities. This solution could be further extended to include other channels in the future.
-
-# Architecture in short
+I have especially used Slack as the first delivery channel since it is quite common in organizations and free to set up personal workspace even for an amateur developer. At the same time, we are not trying to limit the possibilities. This solution could be further extended to include other mediums in the future.
+# Architecture in short :roller_coaster:
 
 ![Arch Diag](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/knj8d49e7yc8onsbbfxt.jpeg)
 
-The backbone of this stack is based on the new feature released for the availability of cloud formation events in the default bus in the event bridge.
+The backbone of this stack is based on the new feature released for the availability of cloud formation events in the default bus in the AWS Eventbridge.
 
-These events are three types.
+These events are of three types.
 
-* Stack level changes Event
-* Resource level changes Event
-* Drift detection Event
+* Stack level Events
+* Resource level Events
+* Drift detection Events
 
 This project stack has two components as elaborated below.
 
-* `Remote Event Router Stack` which is deployed into one or many regions across accounts forwarding specific event bridge events (Cloudformation Events specifically) into the target default EventBus (in the below stack) by making use of event bridge rules to forward events from the current default EventBus (source).
+* `Remote Event Router Stack` which is deployed into one or many regions across accounts forwarding specific eventbridge events (Cloudformation Events specifically) into the specific target default EventBus (in the below stack) from the current default EventBus (source) by making use of event bridge rules.
 * `Event Forwarder Stack` which lives in a single region for event ingestion and transformation to various delivery channels (Slack is the first channel) from the default EventBus (target).
 
-## Prerequisites
+## Prerequisites :roller_coaster:
 
-1) At least single region where you could cdk deploy with necessary privileges to provide the resources such as lambda, sqs, eventbridge rules, and targets with access to cloudwatch and xray
+1) At least single region where you could cdk deploy with necessary privileges to spin up the resources such as lambda, sqs, eventbridge rules, and targets with access to cloudwatch and xray
 
->Want to experiment making use of AWS free tier benefits for personal use and request access sandbox account from your org
+>Make use of AWS free tier benefits for personal use or request access sandbox account from your org to try this out.
 
-2) At least one Custom Slack App with incoming webhook generated and configured to post to necessary slack channels
+1) At least one Custom Slack App with incoming webhook generated and configured to post to necessary slack channels
 
 >Want to experiment create a free slack workspace (Recommended), creating a slack app with an incoming webhook, or generating an incoming webhook in a slack app from your organization admin? There are multiple tutorials to get this or DM me for clarifications.
+
+* [Create Slack App](https://api.slack.com/authentication/basics#creating)
+
+* [Setup Incoming Webhook](https://api.slack.com/messaging/webhooks)
 
 ## Checkout the config folder before you run
 
@@ -54,7 +61,7 @@ The `default.json` and `test.json` are from GitHub with dummy fields make sure y
 }
 ```
 
-# Setup and bootstrapping these stack
+# Setup and bootstrapping
 
 Like other project repos, you need to simply clone this repo and install the dependencies.
 
@@ -105,12 +112,13 @@ Those are only the formalities I wanted to mention for the beginners/starters wi
   `cdk:deploy`
 
 > Remember a single region/account is sufficient to try this integration but I just wanted to remind you about the capabilities.
+
 * To deploy the remote stacks run the below command.
   `cdk:deploy:remotes`
 
 ## Use cases that emit Cloudformation Events:
 
-* Sample CDK deployment via terminal or even CDK destroy these are visible for the developer but may not be saved anywhere except in the AWS console view. Your peers are also not aware of these deployments.
+* CDK deployment via terminal or even CDK destroy these are visible for the developer but may not be saved anywhere except in the AWS console view. Your peers are also not aware of these deployments happening until they check the console. Sending this to slack channels will drive greater involvements from the team.
 
   ![simple stack deployment](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/j7017a2xvep214r6doo0.png)
 
@@ -152,7 +160,7 @@ Never miss anything happening to your cloud formation stacks since you will be a
 
 ![create/update 3](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/cdggdp9wvpr28wjnx5t9.png)
 
-### Even exception in this stack
+### Even exception are sent to slack
 
 This can be directly reported to the maintainers without waiting to dig into the cloudwatch logs to identify and track the issue.
 
@@ -162,16 +170,25 @@ And all these cool things about this slack post it is having a rich format that 
 
 > Note these console links will only work if you have already logged into your respective AWS account in the browser where you open them and if you have the necessary privileges make sure that security even for production environments is honored when you share this across various members of your teams for any follow ups in any slack threads.
 
+## Extracted Utils :roller_coaster:
 
-## Dynamodb to store data
+I have made used most of the generic parts of this solution are refracted into separated util functions which could help to simply the solution and may be reuse them in your own project work.
 
-Here in this article, we choose to use dynamodb not only as an ad-hoc data store. I believe the data generated will trigger further insights and expand the possibilities of this solution.
+* Slack Utils
+* Console Utils
+* Dynamodb Utils
+* Data model to interact with dynamodb
+* Cfn events definition and may be more soon.
 
-### Indexes created for critical data lookups
+## Dynamodb to store data :roller_coaster:
+
+Here in this article, we choose to use dynamodb not only as an ad-hoc data store. I believe the data generated will trigger further insights and expand the possibilities of this solution. Also I have used provisioned RCUs and WCUs to make use of my free tier benefits and as well set throttling, it is also recommend try with on-demand mode and pay as your usage.
+
+### Indexes created for critical data lookups :roller_coaster:
 
 ![rich indexes](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/or2mxqgomg2jxewpsj4k.png)
 
-### Sample DB item
+### Sample DB item :roller_coaster:
 
 ```json
 {
@@ -210,7 +227,7 @@ If in case missed my previous article, do find it with the below links.
 
 🔁 Reposted the previous series post at 🔗 [dev to @aravindvcyber](https://dev.to/aravindvcyber/series/17111)
 
-🎉 Thanks for supporting! 🙏
+🎉 Thanks for supporting! 🙏 and do follow and share this series for more such articles.
 
 Would be great if you like to [☕ Buy Me a Coffee](https://www.buymeacoffee.com/AravindVCyber), to help boost my efforts 😍.
 
