@@ -1,5 +1,6 @@
 import {
   aws_events_targets,
+  aws_sqs,
   CfnOutput,
   RemovalPolicy,
   Stack,
@@ -17,6 +18,7 @@ import {
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { DeadLetterQueue, Queue } from "aws-cdk-lib/aws-sqs";
+import { AccountPrincipal } from "aws-cdk-lib/aws-iam";
 
 import { Construct } from "constructs";
 import { join } from "path";
@@ -29,14 +31,27 @@ import {
 //import { IConfig } from '../utils/config'
 const config = require("config");
 import dynamodb = require("aws-sdk/clients/dynamodb");
-import { getDefaultBus, generateDLQ, generateQueue, generateQueueFifo, generateDLQFifo } from "./commons";
+import {
+  getDefaultBus,
+  generateDLQ,
+  generateQueue,
+  generateQueueFifo,
+  generateDLQFifo,
+} from "./commons";
 import iam = require("aws-sdk/clients/iam");
+
+import { Topic } from "aws-cdk-lib/aws-sns";
+import IAM = require("aws-sdk/clients/iam");
 
 export class EventForwarderStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const eventBus = getDefaultBus(this, config.get('region'), config.get('account') );
+    const eventBus = getDefaultBus(
+      this,
+      config.get("region"),
+      config.get("account")
+    );
 
     const stackEventsRule = new Rule(this, "stack-events-rule", {
       eventPattern: {
@@ -65,36 +80,36 @@ export class EventForwarderStack extends Stack {
       stackEventProcessorQueueDLQ
     );
 
-    const stackEventTargetDLQ: DeadLetterQueue = {
-      queue: generateDLQ(this, "stackEventTargetDLQ"),
+    const stackEventTargetDlq: DeadLetterQueue = {
+      queue: generateDLQ(this, "stackEventTargetDlq"),
       maxReceiveCount: 100,
     };
-
-    new CfnOutput(this, "stackEventTargetDLQArn", {
-      value: stackEventTargetDLQ.queue.queueArn,
-      exportName: 'stackEventTargetDLQArn'
-    })
-
-
 
     const stackEventTarget = new aws_events_targets.SqsQueue(
       stackEventProcessorQueue,
       {
         retryAttempts: 3,
-        deadLetterQueue: stackEventTargetDLQ.queue,
+        deadLetterQueue: stackEventTargetDlq.queue,
       }
     );
 
     const remoteAccounts = config.get("remoteAccounts").split(",");
 
     remoteAccounts.map((account: string) => {
-      new CfnEventBusPolicy(this, `CrossAccountPolicy-${account}`, {
-        action: "events:PutEvents",
-        eventBusName: eventBus.eventBusName,
-        principal: account,
-        statementId: `AcceptFrom${account}`,
-      });
-    })
+      stackEventTargetDlq.queue.grantSendMessages(
+        new AccountPrincipal(`${account}`)
+      );
+
+      eventBus.grantPutEventsTo(new AccountPrincipal(`${account}`));
+      // new CfnEventBusPolicy(this, `CrossAccountPolicy-${account}`, {
+      //   action: "events:PutEvents",
+      //   eventBusName: eventBus.eventBusName,
+      //   principal: account,
+      //   statementId: `AcceptFrom${account}`,
+      // });
+
+      //const remoteStackEventTargetDlqSns = Topic.fromTopicArn(this, 'remoteStackEventTargetDlqSns',`arn:aws:sns:us-east-2:575066707855:RemoteEventRouterStack-remoteStackEventTargetDlqSns9B6A4035-3WtskWdvk2LI`);
+    });
 
     stackEventsRule.addTarget(stackEventTarget);
 
@@ -184,7 +199,8 @@ export class EventForwarderStack extends Stack {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset("dist/lambda/stack-event-processor"),
       handler: "stack-event-processor.handler",
-      logRetention: parseInt(config.get("logRetentionDays")) || RetentionDays.ONE_DAY,
+      logRetention:
+        parseInt(config.get("logRetentionDays")) || RetentionDays.ONE_DAY,
       layers: [external],
       tracing: Tracing.ACTIVE,
       environment: {
@@ -194,7 +210,7 @@ export class EventForwarderStack extends Stack {
         LOG_LEVEL: config.get("logLevel"),
         PER_POST_Event_Count: config.get("perPostEventCount"),
         DYNAMODB_QUERY_PAGING_LIMIT: config.get("dynamodbQueryPagingLimit"),
-        DELETE_NOTIFIED: config.get("deleteNotified")
+        DELETE_NOTIFIED: config.get("deleteNotified"),
       },
     });
 
