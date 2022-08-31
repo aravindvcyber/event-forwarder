@@ -6,10 +6,11 @@
     "event-forwarder": "bin/event-forwarder.js"
   },
   "scripts": {
-    "build:ts": "tsc --noEmit",
-    "build:test": "NODE_ENV=test npm run wp:dev && tsc --noEmit && npm run test",
-    "build:prod": "NODE_ENV=production npm run wp:prod && tsc --noEmit && npm run test",
-    "build": "npm run wp:dev && tsc --noEmit && npm run test",
+    "build:cdk": "tsc --noEmit",
+    "build:test": "NODE_ENV=test npm run wp:dev && npm run build:cdk:test",
+    "build:prod": "NODE_ENV=production npm run wp:prod && npm run build:cdk:test",
+    "build": "npm run wp:dev && npm run build:cdk:test",
+    "build:cdk:test": "npm run build:cdk && npm run test",
     "watch": "tsc --noEmit -w",
     "test": "jest",
     "cdk": "cdk",

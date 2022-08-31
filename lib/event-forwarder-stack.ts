@@ -1,5 +1,6 @@
 import {
   aws_events_targets,
+  CfnOutput,
   RemovalPolicy,
   Stack,
   StackProps,
@@ -29,6 +30,7 @@ import {
 const config = require("config");
 import dynamodb = require("aws-sdk/clients/dynamodb");
 import { getDefaultBus, generateDLQ, generateQueue, generateQueueFifo, generateDLQFifo } from "./commons";
+import iam = require("aws-sdk/clients/iam");
 
 export class EventForwarderStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -45,11 +47,6 @@ export class EventForwarderStack extends Stack {
       },
       eventBus,
     });
-
-    // const stackEventProcessorQueueDLQ: DeadLetterQueue = {
-    //   queue: generateDLQFifo(this, "stackEventProcessorQueueDLQ.fifo"),
-    //   maxReceiveCount: 100,
-    // };
 
     const stackEventProcessorQueueDLQ: DeadLetterQueue = {
       queue: generateDLQ(this, "stackEventProcessorQueueDLQ"),
@@ -73,6 +70,13 @@ export class EventForwarderStack extends Stack {
       maxReceiveCount: 100,
     };
 
+    new CfnOutput(this, "stackEventTargetDLQArn", {
+      value: stackEventTargetDLQ.queue.queueArn,
+      exportName: 'stackEventTargetDLQArn'
+    })
+
+
+
     const stackEventTarget = new aws_events_targets.SqsQueue(
       stackEventProcessorQueue,
       {
@@ -80,6 +84,17 @@ export class EventForwarderStack extends Stack {
         deadLetterQueue: stackEventTargetDLQ.queue,
       }
     );
+
+    const remoteAccounts = config.get("remoteAccounts").split(",");
+
+    remoteAccounts.map((account: string) => {
+      new CfnEventBusPolicy(this, `CrossAccountPolicy-${account}`, {
+        action: "events:PutEvents",
+        eventBusName: eventBus.eventBusName,
+        principal: account,
+        statementId: `AcceptFrom${account}`,
+      });
+    })
 
     stackEventsRule.addTarget(stackEventTarget);
 
