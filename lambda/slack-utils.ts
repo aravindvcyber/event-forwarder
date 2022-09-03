@@ -59,8 +59,10 @@ export function generateInnerSection(
   region: string
 ): PlainTextElement | MrkdwnElement {
   logger.info(item, { item });
-  let note: string =
-    new Date(parseInt(item.time.N)).toLocaleString() + " | " + item.type.S;
+
+  const timeString = formatWithTZ(new Date(parseInt(item.time.N)));
+  let note: string = timeString
+     + " | " + item.type.S;
 
   let itemTemplate: PlainTextElement | MrkdwnElement = generateItemTemplate(
     "mrkdwn",
@@ -347,4 +349,15 @@ export async function sendUsingErrorSlackHook(
   } catch (error) {
     logger.info({ slackError: error });
   }
+}
+
+const tz = process.env.TZ
+const locale = process.env.LOCALE
+
+function formatWithTZ(date: any, timeZone: string = tz as string) {
+  return new Date(
+    (typeof date === "string" ? new Date(date) : date).toLocaleString(locale, {
+      timeZone, timeZoneName: 'short', hour12: true
+    })
+  );
 }

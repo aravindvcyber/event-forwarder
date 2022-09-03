@@ -3,6 +3,7 @@ import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { EventForwarderStack } from "../lib/event-forwarder-stack";
 import { RemoteEventRouterStack } from "../lib/remote-event-router-stack";
+import { Tags } from "aws-cdk-lib";
 //import { IConfig } from 'config'
 const config = require("config");
 const app = new cdk.App();
@@ -13,7 +14,7 @@ const remoteRegions = config.get("remoteRegions").split(",");
 
 
 
-new EventForwarderStack(app, "EventForwarderStack", {
+const EventForwarder = new EventForwarderStack(app, "EventForwarderStack", {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
@@ -30,14 +31,21 @@ new EventForwarderStack(app, "EventForwarderStack", {
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
 
+//Tags.of(EventForwarder).add('appName', 'event-forwarder');
+
 remoteAccounts.map((account: string) => {
   remoteRegions.map((region: string) => {
-    new RemoteEventRouterStack(app, `RemoteEventRouterStack-${region}-${account}`, {
+    const RemoteEventRouter = new RemoteEventRouterStack(app, `RemoteEventRouterStack-${region}-${account}`, {
       env: { account, region },
       analyticsReporting: true,
       stackName: `RemoteEventRouterStack`,
       account,
       region
     });
+    //Tags.of(RemoteEventRouter).add('appName', 'event-forwarder');
   });
 });
+
+
+
+

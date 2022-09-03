@@ -1,11 +1,14 @@
 import * as cdk from 'aws-cdk-lib'
 import { Template } from 'aws-cdk-lib/assertions'
-import {EventForwarderStack}from '../lib/event-forwarder-stack'
+import {RemoteEventRouterStack}from '../lib/remote-event-router-stack'
 
 test('SQS Queue Created', () => {
   const app = new cdk.App()
 
-  const stack = new EventForwarderStack(app, 'MyTestStack')
+  const stack = new RemoteEventRouterStack(app, 'MyTestStack',{
+    account: '123',
+    region: 'us-east-1'
+  })
 
   const template = Template.fromStack(stack)
 

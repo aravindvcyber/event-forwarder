@@ -1,7 +1,9 @@
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { EventBus, IEventBus } from "aws-cdk-lib/aws-events";
+import { Architecture, Code, LayerVersion, LayerVersionProps, Runtime } from "aws-cdk-lib/aws-lambda";
 import { DeadLetterQueue, Queue } from "aws-cdk-lib/aws-sqs";
 import { Construct } from "constructs";
+import { join } from "path";
 
 
 export const dlqQueueProps = {
@@ -59,4 +61,30 @@ export const generateQueueFifo = (
     deadLetterQueue,
     fifo: true
   });
+};
+
+
+
+
+
+const defaultLayerProps: LayerVersionProps = {
+  removalPolicy: RemovalPolicy.DESTROY,
+  code: Code.fromAsset(join(__dirname, "..", "layers", "default")),
+  // code: Code.fromAsset(join(__dirname, "..", "dist", "layers", "utils")),
+  compatibleArchitectures: [Architecture.X86_64],
+  compatibleRuntimes: [Runtime.NODEJS_14_X],
+}
+
+
+
+export const generateLayerVersion = (
+  scope: Construct,
+  layerName: string,
+  props: Partial<LayerVersion>
+): LayerVersion => {
+    return new LayerVersion(scope, layerName, {
+      ...defaultLayerProps,
+      code: Code.fromAsset(join(__dirname, "..", "layers", layerName)),
+      ...props
+    })  
 };

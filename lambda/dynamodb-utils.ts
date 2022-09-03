@@ -1,15 +1,15 @@
 const AWSXRay = require("aws-xray-sdk-core");
-const AWS = AWSXRay.captureAWS(require("aws-sdk"));
+//const AWS = AWSXRay.captureAWS(require("aws-sdk"));
 
 import { DynamoDB } from "aws-sdk";
 import {
-  BatchGetItemInput,
-  BatchGetItemOutput,
-  BatchGetRequestMap,
+  // BatchGetItemInput,
+  // BatchGetItemOutput,
+  // BatchGetRequestMap,
   PutItemInput,
   PutItemInputAttributeMap,
-  KeyList,
-  KeysAndAttributes,
+  // KeyList,
+  // KeysAndAttributes,
   QueryInput,
   QueryOutput,
   UpdateItemOutput,
@@ -17,12 +17,14 @@ import {
   BatchWriteItemInput,
   WriteRequest,
   BatchWriteItemRequestMap,
+  ItemList,
+  Key,
 } from "aws-sdk/clients/dynamodb";
 
 import { CloudformationEventDbModel } from "./model";
 import { logger } from "./stack-event-processor";
 
-const dynamo: DynamoDB = new AWS.DynamoDB();
+const dynamo = AWSXRay.captureAWSClient(new DynamoDB());
 
 const tableName: string = process.env.EVENT_STORE || "";
 
@@ -45,52 +47,50 @@ export const dbPut: any = async (event: CloudformationEventDbModel) => {
   await dynamo.putItem(putData).promise();
 };
 
-export const batchGetDbItems = async (
-  keys: string[]
-): Promise<BatchGetItemOutput> => {
-  logger.info("Getting: ", { keys });
+// export const batchGetDbItems = async (
+//   keys: string[]
+// ): Promise<BatchGetItemOutput> => {
+//   logger.info("Getting: ", { keys });
 
-  const keyList: KeyList = keys.map((key: string) => {
-    return {
-      stackId: { S: key },
-      time: {
-        N: "1660908358000",
-      },
-    };
-  });
+//   const keyList: KeyList = keys.map((key: string) => {
+//     return {
+//       stackId: { S: key },
+//       time: {
+//         N: "1660908358000",
+//       },
+//     };
+//   });
 
-  const requestKeyAttr: KeysAndAttributes = {
-    ConsistentRead: true,
-    Keys: keyList,
-  };
+//   const requestKeyAttr: KeysAndAttributes = {
+//     ConsistentRead: true,
+//     Keys: keyList,
+//   };
 
-  const getRequestMap: BatchGetRequestMap = {
-    tableName: requestKeyAttr,
-  };
-  const params: BatchGetItemInput = {
-    RequestItems: getRequestMap,
-    ReturnConsumedCapacity: "TOTAL",
-  };
+//   const getRequestMap: BatchGetRequestMap = {
+//     tableName: requestKeyAttr,
+//   };
+//   const params: BatchGetItemInput = {
+//     RequestItems: getRequestMap,
+//     ReturnConsumedCapacity: "TOTAL",
+//   };
 
-  logger.info("GetItem: ", { params });
-  let result: BatchGetItemOutput = {};
-  try {
-    result = await dynamo.batchGetItem(params).promise();
-  } catch (error) {
-    logger.error("Error: ", { error });
-  }
+//   logger.info("GetItem: ", { params });
+//   let result: BatchGetItemOutput = {};
+//   try {
+//     result = await dynamo.batchGetItem(params).promise();
+//   } catch (error) {
+//     logger.error("Error: ", { error });
+//   }
 
-  return result;
-};
+//   return result;
+// };
 
-export const queryAllDbItems = async (
-  key: string
-): Promise<DynamoDB.ItemList> => {
+export const queryAllDbItems = async (key: string): Promise<ItemList> => {
   logger.info("queryAllDbItems: ", { key });
 
-  let lastEvaluatedKey: DynamoDB.Key | undefined = undefined;
+  let lastEvaluatedKey: Key | undefined = undefined;
 
-  let result: DynamoDB.ItemList = [];
+  let result: ItemList = [];
 
   do {
     const partOutput: QueryOutput = await queryDbItems(key, lastEvaluatedKey);
@@ -103,11 +103,11 @@ export const queryAllDbItems = async (
   return result;
 };
 
-export const batchDeleteDbItems = async (keys: DynamoDB.Key[]) => {
+export const batchDeleteDbItems = async (keys: Key[]) => {
   logger.info("Deleting: ", { keys });
 
   const writeItems: WriteRequest[] = [];
-  keys.map((key: DynamoDB.Key) => {
+  keys.map((key: Key) => {
     const writeItem: WriteRequest = {
       DeleteRequest: {
         Key: key,
@@ -130,7 +130,7 @@ export const batchDeleteDbItems = async (keys: DynamoDB.Key[]) => {
 
 export const queryDbItems = async (
   key: string,
-  fromKey?: DynamoDB.Key
+  fromKey?: Key
 ): Promise<QueryOutput> => {
   logger.info("queryDbItems: ", { key, fromKey });
 
@@ -170,9 +170,7 @@ export const queryDbItems = async (
   return result;
 };
 
-export const updateDbItem = async (
-  key: DynamoDB.Key
-): Promise<UpdateItemOutput> => {
+export const updateDbItem = async (key: Key): Promise<UpdateItemOutput> => {
   logger.info("Updating: ", { key });
 
   const params: UpdateItemInput = {

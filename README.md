@@ -62,12 +62,22 @@ The `default.json` and `test.json` are from GitHub with dummy fields make sure y
     "dynamodbQueryPagingLimit": "15",//This is used to have limited the read units on a single API call to not throttle your dynamodb if you are using provisioned RCU.
     "logRetentionDays": "14",//Retention period for the primary handler cloudwatch logs
     "deleteNotified": "false", //Setting this to true will automatically delete data from dynamoDb once the event are notified. But I highly recommend you to have this false to understand the data which gets generated, which could help you with other integrations or possibilities in this monitoring
+    "timeZone": "Asia/Kolkata", //custom time zone for time
+    "locale": "en-US" //necessary locale
 }
 ```
 
 # Setup and bootstrapping
 
 Like other project repos, you need to simply clone this repo and install the dependencies.
+
+Notably in this repo specifically you many need to install packages using `npm i`
+at the below folders
+
+* root path [./]
+* powertoolsSDK lambda layer folder[./layers/powertoolsSDK/nodejs]
+* slackSDK lambda layer folder [./layers/slackSDK/nodejs]
+* xraySDK lambda layer folder [./layers/xraySDK/nodejs]
 
 Besides that, you may need to configure an AWS profile in your terminal where you run this solution.
 

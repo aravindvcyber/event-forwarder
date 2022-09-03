@@ -40,8 +40,16 @@ export const generateResourceLink = (
       baseUrl +
       `systems-manager/appmanager/application/AppManager-CFN-${stackName}?region=${region}&tab=AppManagerApplicationResourcesTab`
     );
+  } else if (resourceType === "AWS::Lambda::LayerVersion") {
+    const layerVersionNumber = physicalId.split(":").reverse()[0]
+    const layerVersionName = physicalId.split(":").reverse()[1]
+    return (
+      baseUrl +
+      `lambda/home?region=${region}#/layers/${layerVersionName}/versions/${layerVersionNumber}?tab=versions`
+    );
   } else {
     return physicalId;
   }
 };
+
 

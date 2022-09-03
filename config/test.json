@@ -9,5 +9,7 @@
     "perPostEventCount": "10",
     "dynamodbQueryPagingLimit": "15",
     "logRetentionDays": "1",
-    "deleteNotified": "false"
+    "deleteNotified": "false",
+    "timeZone": "Asia/Kolkata",
+    "locale": "en-IN"
 }

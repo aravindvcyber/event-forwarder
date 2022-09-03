@@ -2,11 +2,12 @@ import {
   aws_events_targets,
   aws_sns_subscriptions,
   CfnOutput,
+  Fn,
   RemovalPolicy,
   Stack,
   StackProps,
 } from "aws-cdk-lib";
-import { CfnEventBusPolicy, Rule } from "aws-cdk-lib/aws-events";
+import { Rule } from "aws-cdk-lib/aws-events";
 
 import { DeadLetterQueue, Queue } from "aws-cdk-lib/aws-sqs";
 
@@ -15,8 +16,8 @@ import { Construct } from "constructs";
 import { Function } from "aws-cdk-lib/aws-lambda";
 //import { IConfig } from '../utils/config'
 const config = require("config");
-import dynamodb = require("aws-sdk/clients/dynamodb");
-import { generateDLQ, getDefaultBus } from "./commons";
+
+import { generateDLQ, generateLayerVersion, getDefaultBus } from "./commons";
 import { Topic } from "aws-cdk-lib/aws-sns";
 import { Code, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
@@ -67,12 +68,22 @@ export class RemoteEventRouterStack extends Stack {
       "remoteStackEventTargetDlqSns",
       {
         displayName: "remoteStackEventTargetDlqSns",
+        topicName: "remoteStackEventTargetDlqSns",
       }
     );
+
+    remoteStackEventTargetDlqSns.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
     new CfnOutput(this, "remoteStackEventTargetDlqSnsArn", {
       value: remoteStackEventTargetDlqSns.topicArn,
       exportName: "remoteStackEventTargetDlqSnsArn",
+    });
+
+    const powertoolsSDK = generateLayerVersion(this, "powertoolsSDK", {});
+
+    new CfnOutput(this, "powertoolsSDKArn", {
+      exportName: "powertoolsSDKArn",
+      value: powertoolsSDK.layerVersionArn,
     });
 
     const failedMessageAggregator = new Function(
@@ -85,8 +96,11 @@ export class RemoteEventRouterStack extends Stack {
         logRetention:
           parseInt(config.get("logRetentionDays")) || RetentionDays.ONE_DAY,
         tracing: Tracing.ACTIVE,
+        layers: [powertoolsSDK],
         environment: {
           TOPIC_ARN: remoteStackEventTargetDlqSns.topicArn,
+          TZ: config.get("timeZone"),
+        LOCALE: config.get('locale')
         },
       }
     );
@@ -111,18 +125,18 @@ export class RemoteEventRouterStack extends Stack {
       })
     );
 
-    const stackEventTargetDlq: DeadLetterQueue = {
-      queue: Queue.fromQueueArn(
-        this,
-        "stackEventTargetDlq-",
-        `arn:aws:sqs:${targetRegion}:${targetAccount}:stackEventTargetDlq`
-      ),
-      maxReceiveCount: 100,
-    };
+    // const stackEventTargetDlq: DeadLetterQueue = {
+    //   queue: Queue.fromQueueArn(
+    //     this,
+    //     `stackEventTargetDlq-${targetRegion}:${targetAccount}`,
+    //     `arn:aws:sqs:${targetRegion}:${targetAccount}:stackEventTargetDlq`
+    //   ),
+    //   maxReceiveCount: 100,
+    // };
 
-    remoteStackEventTargetDlqSns.addSubscription(
-      new aws_sns_subscriptions.SqsSubscription(stackEventTargetDlq.queue)
-    );
+    // remoteStackEventTargetDlqSns.addSubscription(
+    //   new aws_sns_subscriptions.SqsSubscription(stackEventTargetDlq.queue)
+    // );
 
     stackEventsRoute.addTarget(stackEventTarget);
   }

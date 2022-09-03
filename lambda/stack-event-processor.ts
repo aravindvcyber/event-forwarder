@@ -9,7 +9,6 @@ import {
   errorMessageComposer,
   generateInnerSection,
   genErrBlock,
-  mrkdwnLink,
   sendUsingErrorSlackHook,
   sendUsingSlackHook,
   stackEventMessageComposer,
@@ -25,10 +24,11 @@ import {
   updateDbItem,
 } from "./dynamodb-utils";
 import { CloudformationEventDbModel, genCustomTableKey, timeOrder, toDataModel } from "./model";
-import { AttributeMap, BatchWriteItemOutput, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
-import DynamoDB = require("aws-sdk/clients/dynamodb");
+import { AttributeMap, ItemList, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
 
 const middy = require("@middy/core");
+
+export const serviceName = "EventForwarderHandler";
 
 const {
   Tracer,
@@ -42,7 +42,7 @@ const {
 
 export const logger = new Logger({
   logLevel: process.env.LOG_LEVEL || "INFO",
-  serviceName: "EventForwarderHandler",
+  serviceName,
   persistentLogAttributes: {
     version: "1",
   },
@@ -50,7 +50,9 @@ export const logger = new Logger({
 
 const deleteNotified = process.env.DELETE_NOTIFIED || "false";
 
-const tracer = new Tracer({ serviceName: "EventForwarderHandler" });
+export const tracer = new Tracer({ serviceName });
+
+tracer.provider.setLogger(logger);
 
 const handle = async function (event: SQSEvent) {
   tracer.putAnnotation("successfulStart", true);
@@ -114,7 +116,7 @@ const handle = async function (event: SQSEvent) {
 
     if (stackId.length > 0) {
       tracer.putAnnotation("retrievingItems", true);
-      let output: DynamoDB.ItemList = await queryAllDbItems(stackId);
+      let output: ItemList = await queryAllDbItems(stackId);
       logger.info("Output", { output });
 
       const keyPairList: { PK: string; SK: string }[] = [];

@@ -1,27 +1,25 @@
 import {
   aws_events_targets,
-  aws_sqs,
+  aws_sns_subscriptions,
   CfnOutput,
   RemovalPolicy,
   Stack,
   StackProps,
 } from "aws-cdk-lib";
-import { CfnEventBusPolicy, EventBus, Rule } from "aws-cdk-lib/aws-events";
+import { CfnEventBusPolicy, Rule } from "aws-cdk-lib/aws-events";
 import {
   Code,
   Runtime,
   Function,
-  LayerVersion,
-  Architecture,
   Tracing,
 } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { DeadLetterQueue, Queue } from "aws-cdk-lib/aws-sqs";
-import { AccountPrincipal } from "aws-cdk-lib/aws-iam";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import { DeadLetterQueue } from "aws-cdk-lib/aws-sqs";
+import { AccountPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 import { Construct } from "constructs";
-import { join } from "path";
+
 import {
   AttributeType,
   ProjectionType,
@@ -30,18 +28,18 @@ import {
 } from "aws-cdk-lib/aws-dynamodb";
 //import { IConfig } from '../utils/config'
 const config = require("config");
-import dynamodb = require("aws-sdk/clients/dynamodb");
+
 import {
   getDefaultBus,
   generateDLQ,
   generateQueue,
-  generateQueueFifo,
-  generateDLQFifo,
+  generateLayerVersion,
+  // generateQueueFifo,
+  // generateDLQFifo,
 } from "./commons";
-import iam = require("aws-sdk/clients/iam");
-
 import { Topic } from "aws-cdk-lib/aws-sns";
-import IAM = require("aws-sdk/clients/iam");
+import { SqsSubscriptionProps } from "aws-cdk-lib/aws-sns-subscriptions";
+
 
 export class EventForwarderStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -94,19 +92,48 @@ export class EventForwarderStack extends Stack {
     );
 
     const remoteAccounts = config.get("remoteAccounts").split(",");
+    const remoteRegions = config.get("remoteRegions").split(",");
 
     remoteAccounts.map((account: string) => {
-      stackEventTargetDlq.queue.grantSendMessages(
-        new AccountPrincipal(`${account}`)
+      remoteRegions.map((region: string) => {
+      // stackEventTargetDlq.queue.grantSendMessages(
+      //   new AccountPrincipal(`${account}`)
+      // );
+
+      stackEventTargetDlq.queue.addToResourcePolicy(
+        new PolicyStatement({
+          sid: `Cross Account Access to send message-${account}-${region}`,
+          effect: Effect.ALLOW,
+          principals: [new AccountPrincipal(account)],
+          actions: ["sqs:SendMessage"],
+          resources: [stackEventTargetDlq.queue.queueArn],
+        })
       );
 
-      eventBus.grantPutEventsTo(new AccountPrincipal(`${account}`));
-      // new CfnEventBusPolicy(this, `CrossAccountPolicy-${account}`, {
-      //   action: "events:PutEvents",
-      //   eventBusName: eventBus.eventBusName,
-      //   principal: account,
-      //   statementId: `AcceptFrom${account}`,
-      // });
+      const remoteStackEventTargetDlqSns = Topic.fromTopicArn(this,
+         `remoteStackEventTargetDlqSns-${account}-${region}`,
+         `arn:aws:sns:${region}:${account}:remoteStackEventTargetDlqSns`)
+
+      const subProps: SqsSubscriptionProps = {
+        rawMessageDelivery: true
+      }
+
+      remoteStackEventTargetDlqSns.addSubscription(
+        new aws_sns_subscriptions.SqsSubscription(stackEventTargetDlq.queue, subProps)
+      );
+
+      //eventBus.grantPutEventsTo(new AccountPrincipal(`${account}`));
+
+      new CfnEventBusPolicy(this, `CrossAccountPolicy-${account}-${region}`, {
+        action: "events:PutEvents",
+        eventBusName: eventBus.eventBusName,
+        principal: account,
+        statementId: `Accept-PutEvents-From-${account}-${region}`,
+        // condition: {
+        
+        // }
+      });
+    });
 
       //const remoteStackEventTargetDlqSns = Topic.fromTopicArn(this, 'remoteStackEventTargetDlqSns',`arn:aws:sns:us-east-2:575066707855:RemoteEventRouterStack-remoteStackEventTargetDlqSns9B6A4035-3WtskWdvk2LI`);
     });
@@ -185,15 +212,24 @@ export class EventForwarderStack extends Stack {
 
     eventStore.applyRemovalPolicy(RemovalPolicy.RETAIN);
 
-    const external = new LayerVersion(this, "event-external", {
-      removalPolicy: RemovalPolicy.DESTROY,
-      code: Code.fromAsset(join(__dirname, "..", "layers", "external")),
-      // code: Code.fromAsset(join(__dirname, "..", "dist", "layers", "utils")),
-      compatibleArchitectures: [Architecture.X86_64],
-      compatibleRuntimes: [Runtime.NODEJS_14_X],
+    const powertoolsSDK = generateLayerVersion(this, "powertoolsSDK", {})
+
+    new CfnOutput(this, 'powertoolsSDKArn', {
+      exportName: 'powertoolsSDKArn',
+      value: powertoolsSDK.layerVersionArn
     });
 
-    external.applyRemovalPolicy(RemovalPolicy.DESTROY);
+    const slackSDK = generateLayerVersion(this, "slackSDK", {});
+    new CfnOutput(this, 'slackSDKArn', {
+      exportName: 'slackSDKArn',
+      value: powertoolsSDK.layerVersionArn
+    });
+
+    const xraySDK = generateLayerVersion(this, "xraySDK", {});
+    new CfnOutput(this, 'xraySDKArn', {
+      exportName: 'xraySDKArn',
+      value: powertoolsSDK.layerVersionArn
+    });
 
     const stackEventProcessor = new Function(this, "stackEventProcessor", {
       runtime: Runtime.NODEJS_14_X,
@@ -201,7 +237,7 @@ export class EventForwarderStack extends Stack {
       handler: "stack-event-processor.handler",
       logRetention:
         parseInt(config.get("logRetentionDays")) || RetentionDays.ONE_DAY,
-      layers: [external],
+      layers: [xraySDK,powertoolsSDK,slackSDK],
       tracing: Tracing.ACTIVE,
       environment: {
         SLACK_HOOK: config.get("slackhook"),
@@ -211,6 +247,8 @@ export class EventForwarderStack extends Stack {
         PER_POST_Event_Count: config.get("perPostEventCount"),
         DYNAMODB_QUERY_PAGING_LIMIT: config.get("dynamodbQueryPagingLimit"),
         DELETE_NOTIFIED: config.get("deleteNotified"),
+        TZ: config.get('timeZone'),
+        LOCALE: config.get('locale')
       },
     });
 
