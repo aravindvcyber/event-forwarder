@@ -13,7 +13,7 @@ I believe a lot of use cases will come soon for now I am starting with the below
 > Starting with Cloudformation events to post Slack notifications effortless from multi-region and even cross accounts to never miss your/peers/ci initiated AWS cloudformation deployments on stacks and resources besides that it could also notify drift events.
 
 I have especially used Slack as the first delivery channel since it is quite common in organizations and free to set up personal workspace even for an amateur developer. At the same time, we are not trying to limit the possibilities. This solution could be further extended to include other mediums in the future.
-# Architecture in short :roller_coaster:
+# Architecture in short :heart:
 
 ![Arch Diag](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/knj8d49e7yc8onsbbfxt.jpeg)
 
@@ -25,12 +25,13 @@ These events are of three types.
 * Resource level Events
 * Drift detection Events
 
-This project stack has two components as elaborated below.
+This project stack has three components as elaborated below.
 
+* `Event Forwarder Data Stack` This has the dynamodb schema and pre-created indexes
 * `Remote Event Router Stack` which is deployed into one or many regions across accounts forwarding specific eventbridge events (Cloudformation Events specifically) into the specific target default EventBus (in the below stack) from the current default EventBus (source) by making use of event bridge rules.
 * `Event Forwarder Stack` which lives in a single region for event ingestion and transformation to various delivery channels (Slack is the first channel) from the default EventBus (target).
 
-## Prerequisites :roller_coaster:
+## Prerequisites :dizzy:
 
 1) At least single region where you could cdk deploy with necessary privileges to spin up the resources such as lambda, sqs, eventbridge rules, and targets with access to cloudwatch and xray
 
@@ -44,7 +45,7 @@ This project stack has two components as elaborated below.
 
 * [Setup Incoming Webhook](https://api.slack.com/messaging/webhooks)
 
-## Checkout the config folder before you run
+## Checkout the config folder before you deploy :reminder_ribbon:
 
 The `default.json` and `test.json` are from GitHub with dummy fields make sure you create `local.json` and `production.json` overriding the necessary fields of choice.
 
@@ -67,7 +68,7 @@ The `default.json` and `test.json` are from GitHub with dummy fields make sure y
 }
 ```
 
-# Setup and bootstrapping
+## Setup and bootstrapping :game_die
 
 Like other project repos, you need to simply clone this repo and install the dependencies.
 
@@ -104,11 +105,11 @@ Those are only the formalities I wanted to mention for the beginners/starters wi
 
 🔁 Reposted the previous series post at 🔗 [dev to @aravindvcyber](https://dev.to/aravindvcyber/series/17111)
 
-## Useful commands
+## Useful commands :black_joker:
 
 * `npm run build`   compile typescript to js using webpack for lambda and to run jest test for testing the compilation issues.
 
-### Standard CDK commands
+### Standard CDK commands :knot:
   
 * `cdk synth`       emits the synthesized CloudFormation template and also makes sure your code is healthy and good to deploy
 
@@ -118,19 +119,28 @@ Those are only the formalities I wanted to mention for the beginners/starters wi
 
 * `cdk destroy`     destroy the stack or clean up your last deployment if fails miserably before you start again
 
-### Custom npm scripts
+### Custom npm scripts :yarn:
 
-(make sure you have custom-named profile `av` or update it accordingly)
+(make sure you have custom-named profile `av` or `av-s` or update it accordingly)
+
+(Always the first deployment in case of any changes to data stack)
+
+* To setup the dynamodb data store run the below command
+  `cdk:deploy:data`
+
+(Optional but recommended to go next if you mutate the remote stacks)
 
 * To deploy the remote stacks run the below command.
+  `cdk:deploy:remotes`
+  
+(Finally deploy the processor stack)
+
+* To deploy the processor stack run the below command.
   `cdk:deploy`
 
 > Remember a single region/account is sufficient to try this integration but I just wanted to remind you about the capabilities.
 
-* To deploy the remote stacks run the below command.
-  `cdk:deploy:remotes`
-
-## Use cases that emit Cloudformation Events:
+## Use cases that emit Cloudformation Events :art:
 
 * CDK deployment via terminal or even CDK destroy these are visible for the developer but may not be saved anywhere except in the AWS console view. Your peers are also not aware of these deployments happening until they check the console. Sending this to slack channels will drive greater involvements from the team.
 
@@ -152,7 +162,9 @@ Those are only the formalities I wanted to mention for the beginners/starters wi
 
 * Forbidden environments where you don't have access to checkout the events and resources created and may know if it had failed or does not know the resource names and you could not check this in the console.
 
-## Slack Posts Results
+* Even Amplify deployments or any third party stack deployments using cloud formation. These could be easily tracked from slack console.
+
+## Slack Posts Results :performing_arts:
 
 Never miss anything happening to your cloud formation stacks since you will be always notified in your respective slack channel using this solution.
 
@@ -184,7 +196,7 @@ And all these cool things about this slack post it is having a rich format that 
 
 > Note these console links will only work if you have already logged into your respective AWS account in the browser where you open them and if you have the necessary privileges make sure that security even for production environments is honored when you share this across various members of your teams for any follow ups in any slack threads.
 
-## Extracted Utils :roller_coaster:
+## Extracted Utils :framed_picture:
 
 I have made used most of the generic parts of this solution are refracted into separated util functions which could help to simply the solution and may be reuse them in your own project work.
 
@@ -194,15 +206,15 @@ I have made used most of the generic parts of this solution are refracted into s
 * Data model to interact with dynamodb
 * Cfn events definition and may be more soon.
 
-## Dynamodb to store data :roller_coaster:
+## Dynamodb to store data :musical_keyboard:
 
 Here in this article, we choose to use dynamodb not only as an ad-hoc data store. I believe the data generated will trigger further insights and expand the possibilities of this solution. Also I have used provisioned RCUs and WCUs to make use of my free tier benefits and as well set throttling, it is also recommend try with on-demand mode and pay as your usage.
 
-### Indexes created for critical data lookups :roller_coaster:
+### Indexes created for critical data lookups :guitar:
 
 ![rich indexes](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/or2mxqgomg2jxewpsj4k.png)
 
-### Sample DB item :roller_coaster:
+### Sample DB item :long_drum:
 
 ```json
 {
