@@ -1,16 +1,14 @@
 import {
   aws_events_targets,
-  aws_sns_subscriptions,
   CfnOutput,
   Duration,
-  Fn,
   RemovalPolicy,
   Stack,
   StackProps,
 } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
 
-import { DeadLetterQueue, Queue } from "aws-cdk-lib/aws-sqs";
+import { DeadLetterQueue } from "aws-cdk-lib/aws-sqs";
 
 import { Construct } from "constructs";
 
@@ -18,10 +16,15 @@ import { Function } from "aws-cdk-lib/aws-lambda";
 //import { IConfig } from '../utils/config'
 const config = require("config");
 
-import { generateDLQ, generateLayerVersion, getDefaultBus } from "./commons";
+import {
+  commonLambdaProps,
+  exportOutput,
+  generateDLQ,
+  generateLayerVersion,
+  getDefaultBus,
+} from "./commons";
 import { Topic } from "aws-cdk-lib/aws-sns";
-import { Code, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
-import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import { Code } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { AccountPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
@@ -42,29 +45,28 @@ export class RemoteEventRouterStack extends Stack {
     const targetRegion = config.get("region");
 
     const targetBus = getDefaultBus(this, targetRegion, targetAccount);
-    const sourceBus = getDefaultBus(this, props.region, props.account);
+    const remoteBus = getDefaultBus(this, props.region, props.account);
 
-    const stackEventsRoute = new Rule(this, "stack-events-route", {
+    const remoteStackEventsRule = new Rule(this, "remote-stack-events-rule", {
       eventPattern: {
         detail: {
           "stack-id": [{ exists: true }],
         },
         source: ["aws.cloudformation"],
       },
-      eventBus: sourceBus,
+      eventBus: remoteBus,
     });
 
-    //todo need to single default dlq message, need to route using another process to common one
     const remoteStackEventTargetDlq: DeadLetterQueue = {
       queue: generateDLQ(this, "remoteStackEventTargetDlq"),
       maxReceiveCount: 100,
     };
 
-    const stackEventTarget = new aws_events_targets.EventBus(targetBus, {
+    const remoteStackEventTarget = new aws_events_targets.EventBus(targetBus, {
       deadLetterQueue: remoteStackEventTargetDlq.queue,
     });
 
-    stackEventsRoute.addTarget(stackEventTarget);
+    remoteStackEventsRule.addTarget(remoteStackEventTarget);
 
     const remoteStackEventTargetDlqSns = new Topic(
       this,
@@ -77,33 +79,29 @@ export class RemoteEventRouterStack extends Stack {
 
     remoteStackEventTargetDlqSns.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
-    new CfnOutput(this, "remoteStackEventTargetDlqSnsArn", {
-      value: remoteStackEventTargetDlqSns.topicArn,
-      exportName: "remoteStackEventTargetDlqSnsArn",
-    });
+    exportOutput(
+      this,
+      "remoteStackEventTargetDlqSnsArn",
+      remoteStackEventTargetDlqSns.topicArn
+    );
 
     const powertoolsSDK = generateLayerVersion(this, "powertoolsSDK", {});
 
-    new CfnOutput(this, "powertoolsSDKArn", {
-      exportName: "powertoolsSDKArn",
-      value: powertoolsSDK.layerVersionArn,
-    });
+    exportOutput(this, "powertoolsSDKArn", powertoolsSDK.layerVersionArn);
 
     const failedMessageAggregator = new Function(
       this,
       "failedMessageAggregator",
       {
-        runtime: Runtime.NODEJS_14_X,
         code: Code.fromAsset("dist/lambda/failed-message-aggregator"),
         handler: "failed-message-aggregator.handler",
-        logRetention:
-          parseInt(config.get("logRetentionDays")) || RetentionDays.ONE_DAY,
-        tracing: Tracing.ACTIVE,
+        ...commonLambdaProps,
+        functionName: "failedMessageAggregator",
         layers: [powertoolsSDK],
         environment: {
           TOPIC_ARN: remoteStackEventTargetDlqSns.topicArn,
           TZ: config.get("timeZone"),
-        LOCALE: config.get('locale')
+          LOCALE: config.get("locale"),
         },
       }
     );
@@ -113,7 +111,7 @@ export class RemoteEventRouterStack extends Stack {
     failedMessageAggregator.addEventSource(
       new SqsEventSource(remoteStackEventTargetDlq.queue, {
         batchSize: 10,
-        maxBatchingWindow: Duration.seconds(20)
+        maxBatchingWindow: Duration.seconds(20),
       })
     );
 
@@ -146,7 +144,5 @@ export class RemoteEventRouterStack extends Stack {
     // remoteStackEventTargetDlqSns.addSubscription(
     //   new aws_sns_subscriptions.SqsSubscription(stackEventTargetDlq.queue)
     // );
-
-    
   }
 }

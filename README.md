@@ -15,7 +15,7 @@ I believe a lot of use cases will come soon for now I am starting with the below
 I have especially used Slack as the first delivery channel since it is quite common in organizations and free to set up personal workspace even for an amateur developer. At the same time, we are not trying to limit the possibilities. This solution could be further extended to include other mediums in the future.
 # Architecture in short :heart:
 
-![Arch Diag](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/knj8d49e7yc8onsbbfxt.jpeg)
+![Arch Diag](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/upn7x4geafwzh0hj7ls2.jpeg)
 
 The backbone of this stack is based on the new feature released for the availability of cloud formation events in the default bus in the AWS Eventbridge.
 
@@ -68,7 +68,7 @@ The `default.json` and `test.json` are from GitHub with dummy fields make sure y
 }
 ```
 
-## Setup and bootstrapping :game_die
+## Setup and bootstrapping :game_die:
 
 Like other project repos, you need to simply clone this repo and install the dependencies.
 

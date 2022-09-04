@@ -100,7 +100,7 @@ export function generateInnerSection(
       item.logicalResourceId.S +
       ")`";
 
-    if (item.status.S === "CREATE_COMPLETE") {
+    if (item.status.S === "CREATE_COMPLETE" || item.status.S === "UPDATE_COMPLETE") {
       message = message + " | " + link;
       if (item.resourceType.S === "AWS::Lambda::Function") {
         const loglink = mrkdwnLink(

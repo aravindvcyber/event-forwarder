@@ -1,17 +1,9 @@
 import {
-  aws_events_targets,
-  aws_sns_subscriptions,
   CfnOutput,
   RemovalPolicy,
   Stack,
   StackProps,
 } from "aws-cdk-lib";
-import { CfnEventBusPolicy, Rule } from "aws-cdk-lib/aws-events";
-import { Code, Runtime, Function, Tracing } from "aws-cdk-lib/aws-lambda";
-import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
-import { RetentionDays } from "aws-cdk-lib/aws-logs";
-import { DeadLetterQueue } from "aws-cdk-lib/aws-sqs";
-import { AccountPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import {
   AttributeType,
@@ -23,15 +15,6 @@ import {
 //import { IConfig } from '../utils/config'
 
 const config = require("config");
-
-import {
-  getDefaultBus,
-  generateDLQ,
-  generateQueue,
-  generateLayerVersion,
-} from "./commons";
-import { Topic } from "aws-cdk-lib/aws-sns";
-import { SqsSubscriptionProps } from "aws-cdk-lib/aws-sns-subscriptions";
 
 export const cfnEventStoreTableName: string = config.get("eventStore");
 

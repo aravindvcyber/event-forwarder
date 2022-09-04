@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib'
 import { Template } from 'aws-cdk-lib/assertions'
 import {RemoteEventRouterStack}from '../lib/remote-event-router-stack'
 
-test('SQS Queue Created', () => {
+test('RemoteEventRouterStack Validated', () => {
   const app = new cdk.App()
 
   const stack = new RemoteEventRouterStack(app, 'MyTestStack',{

@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib'
 import { Template } from 'aws-cdk-lib/assertions'
 import {EventForwarderStack}from '../lib/event-forwarder-stack'
 
-test('SQS Queue Created', () => {
+test('EventForwarderStack Validated', () => {
   const app = new cdk.App()
 
   const stack = new EventForwarderStack(app, 'MyTestStack')
