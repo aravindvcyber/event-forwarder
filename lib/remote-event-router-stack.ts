@@ -2,6 +2,7 @@ import {
   aws_events_targets,
   aws_sns_subscriptions,
   CfnOutput,
+  Duration,
   Fn,
   RemovalPolicy,
   Stack,
@@ -63,6 +64,8 @@ export class RemoteEventRouterStack extends Stack {
       deadLetterQueue: remoteStackEventTargetDlq.queue,
     });
 
+    stackEventsRoute.addTarget(stackEventTarget);
+
     const remoteStackEventTargetDlqSns = new Topic(
       this,
       "remoteStackEventTargetDlqSns",
@@ -110,8 +113,14 @@ export class RemoteEventRouterStack extends Stack {
     failedMessageAggregator.addEventSource(
       new SqsEventSource(remoteStackEventTargetDlq.queue, {
         batchSize: 10,
+        maxBatchingWindow: Duration.seconds(20)
       })
     );
+
+    new CfnOutput(this, "failedMessageAggregatorArn", {
+      exportName: "failedMessageAggregatorArn",
+      value: failedMessageAggregator.latestVersion.functionArn,
+    });
 
     remoteStackEventTargetDlqSns.grantPublish(failedMessageAggregator);
 
@@ -120,7 +129,7 @@ export class RemoteEventRouterStack extends Stack {
         sid: "Cross Account Access to subscribe",
         effect: Effect.ALLOW,
         principals: [new AccountPrincipal(targetAccount)],
-        actions: ["SNS:Subscribe"],
+        actions: ["sns:Subscribe"],
         resources: [remoteStackEventTargetDlqSns.topicArn],
       })
     );
@@ -138,6 +147,6 @@ export class RemoteEventRouterStack extends Stack {
     //   new aws_sns_subscriptions.SqsSubscription(stackEventTargetDlq.queue)
     // );
 
-    stackEventsRoute.addTarget(stackEventTarget);
+    
   }
 }
