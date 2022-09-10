@@ -14,9 +14,7 @@ import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { DeadLetterQueue } from "aws-cdk-lib/aws-sqs";
 import { AccountPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
-import {
-  Table,
-} from "aws-cdk-lib/aws-dynamodb";
+import { Table } from "aws-cdk-lib/aws-dynamodb";
 
 //import { IConfig } from '../utils/config'
 
@@ -107,22 +105,22 @@ export class EventForwarderStack extends Stack {
         //   new AccountPrincipal(`${account}`)
         // );
 
-        stackEventTargetDlq.queue.addToResourcePolicy(
-          new PolicyStatement({
-            sid: `Cross Account Access to send message-${region}-${account}`,
-            effect: Effect.ALLOW,
-            principals: [new AccountPrincipal(account)],
-            actions: [
-              "sqs:SendMessage",
-              "sqs:GetQueueAttributes",
-              "sqs:GetQueueUrl",
-            ],
-            resources: [stackEventTargetDlq.queue.queueArn],
-            // condition: {
+        // stackEventTargetDlq.queue.addToResourcePolicy(
+        //   new PolicyStatement({
+        //     sid: `Cross Account Access to send message-${region}-${account}`,
+        //     effect: Effect.ALLOW,
+        //     principals: [new AccountPrincipal(account)],
+        //     actions: [
+        //       "sqs:SendMessage",
+        //       "sqs:GetQueueAttributes",
+        //       "sqs:GetQueueUrl",
+        //     ],
+        //     resources: [stackEventTargetDlq.queue.queueArn],
+        //     // condition: {
 
-            // }
-          })
-        );
+        //     // }
+        //   })
+        // );
 
         const remoteStackEventTargetDlqSns = Topic.fromTopicArn(
           this,
@@ -154,8 +152,6 @@ export class EventForwarderStack extends Stack {
         });
       });
     });
-
-    
 
     const eventStore = Table.fromTableArn(
       this,
@@ -229,6 +225,7 @@ export class EventForwarderStack extends Stack {
       code: Code.fromAsset("dist/lambda/log-dlq-message"),
       handler: "log-dlq-message.handler",
       ...commonLambdaProps,
+      timeout: Duration.seconds(25),
       functionName: "failedMessageLogger",
       layers: [powertoolsSDK],
       environment: {

@@ -115,10 +115,11 @@ export class RemoteEventRouterStack extends Stack {
       })
     );
 
-    new CfnOutput(this, "failedMessageAggregatorArn", {
-      exportName: "failedMessageAggregatorArn",
-      value: failedMessageAggregator.latestVersion.functionArn,
-    });
+    exportOutput(
+      this,
+      "failedMessageAggregatorArn",
+      failedMessageAggregator.latestVersion.functionArn
+    );
 
     remoteStackEventTargetDlqSns.grantPublish(failedMessageAggregator);
 

@@ -6,7 +6,7 @@ Basically, I named this to stress the fact that we would be routing and consumin
 
 🔁 Original post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder)
 
-🔁 Reposted at 🔗 [dev to @aravindvcyber](https://dev.to/aws-builders/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder-1m0m)
+🔁 Reposted at 🔗 [dev to @aravindvcyber](so grant the `sqs:SendMessage` implicitly while the subscription is created.)
 
 I believe a lot of use cases will come soon for now I am starting with the below one.
 
@@ -15,7 +15,7 @@ I believe a lot of use cases will come soon for now I am starting with the below
 I have especially used Slack as the first delivery channel since it is quite common in organizations and free to set up personal workspace even for an amateur developer. At the same time, we are not trying to limit the possibilities. This solution could be further extended to include other mediums in the future.
 # Architecture in short :heart:
 
-![Arch Diag](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/upn7x4geafwzh0hj7ls2.jpeg)
+![arch](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/k433rhx0gmlwp4p7b9wl.jpeg)
 
 The backbone of this stack is based on the new feature released for the availability of cloud formation events in the default bus in the AWS Eventbridge.
 
@@ -263,4 +263,4 @@ Would be great if you like to [☕ Buy Me a Coffee](https://www.buymeacoffee.com
 
 🔁 Original post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder)
 
-🔁 Reposted at 🔗 [dev to @aravindvcyber](https://dev.to/aws-builders/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder-1m0m)
+🔁 Reposted at 🔗 [dev to @aravindvcyber](so grant the `sqs:SendMessage` implicitly while the subscription is created.)
