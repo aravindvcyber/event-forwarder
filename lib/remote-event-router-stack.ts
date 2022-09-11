@@ -98,6 +98,7 @@ export class RemoteEventRouterStack extends Stack {
         ...commonLambdaProps,
         functionName: "failedMessageAggregator",
         layers: [powertoolsSDK],
+        timeout: Duration.seconds(25),
         environment: {
           TOPIC_ARN: remoteStackEventTargetDlqSns.topicArn,
           TZ: config.get("timeZone"),

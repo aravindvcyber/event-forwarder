@@ -29,7 +29,7 @@ export class EventForwarderDataStack extends Stack {
       encryption: TableEncryption.AWS_MANAGED,
       readCapacity: 5,
       writeCapacity: 5,
-      contributorInsightsEnabled: true,
+      contributorInsightsEnabled: false,
     });
 
     cfnEventStore.addLocalSecondaryIndex({
