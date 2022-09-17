@@ -5,6 +5,7 @@ import { EventForwarderStack } from "../lib/event-forwarder-stack";
 import { EventForwarderDataStack } from "../lib/event-forwarder-data-stack";
 import { RemoteEventRouterStack } from "../lib/remote-event-router-stack";
 import { Tags } from "aws-cdk-lib";
+
 //import { IConfig } from 'config'
 const config = require("config");
 const app = new cdk.App();
@@ -28,7 +29,7 @@ const eventForwarderData = new EventForwarderDataStack(app, "EventForwarderDataS
   stackName: "EventForwarderDataStack",
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
-
+Tags.of(eventForwarderData).add('appName', 'event-forwarder');
 
 const EventForwarder = new EventForwarderStack(app, "EventForwarderStack", {
   /* If you don't specify 'env', this stack will be environment-agnostic.
