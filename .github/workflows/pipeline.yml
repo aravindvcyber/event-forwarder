@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x]
+        node-version: [16.x]
     
     steps:
     - uses: actions/checkout@v3
@@ -22,7 +22,10 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Build
+    - name: Install
       run: |
-        npm install
-        npx webpack
+        npx ci
+        npm run postinstall
+    - name: Synth
+      run: |
+        npm run cdk:synth:ci
