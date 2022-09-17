@@ -4,7 +4,7 @@
     "slackhook": "slackhook",
     "errorslackhook": "errorslackhook",
     "remoteRegions":"us-east-1,us-east-2",
-    "remoteAccounts":"123,123",
+    "remoteAccounts":"456,789",
     "logLevel":"INFO",
     "perPostEventCount": "10",
     "dynamodbQueryPagingLimit": "15",

@@ -5,7 +5,7 @@
     "errorslackhook": "",
     "eventStore": "eventStores9",
     "remoteRegions":"us-east-1,us-east-2",
-    "remoteAccounts":"123,456",
+    "remoteAccounts":"456,789",
     "logLevel":"WARN",
     "perPostEventCount": "10",
     "dynamodbQueryPagingLimit": "15",
