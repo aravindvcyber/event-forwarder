@@ -80,6 +80,16 @@ at the below folders
 * slackSDK lambda layer folder [./layers/slackSDK/nodejs]
 * xraySDK lambda layer folder [./layers/xraySDK/nodejs]
 
+Or Simply run the below commands to install from `package-lock.json`
+
+`npm ci`
+
+Note if it does run `postinstall` script, feel free to run it directly `npm run postinstall`
+
+Added Github Workflow to build it automatically to validate the code as well as added live badge below
+
+[![NodeJS with Webpack](https://github.com/aravindvcyber/event-forwarder/actions/workflows/pipeline.yml/badge.svg?branch=main)](https://github.com/aravindvcyber/event-forwarder/actions/workflows/pipeline.yml)
+
 Besides that, you may need to configure an AWS profile in your terminal where you run this solution.
 
 In this project, I have hard coded a specific profile `--profile=av` in `npm run scripts` since I have multiple profiles in my terminal and not to risk deployments with other environments.
