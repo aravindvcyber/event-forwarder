@@ -6,8 +6,8 @@ test('RemoteEventRouterStack Validated', () => {
   const app = new cdk.App()
 
   const stack = new RemoteEventRouterStack(app, 'MyTestStack',{
-    account: '123',
-    region: 'us-east-1'
+    account: '456',
+    region: 'ap-south-1'
   })
 
   const template = Template.fromStack(stack)

@@ -3,7 +3,7 @@
     "region": "us-east-1",
     "slackhook": "slackhook",
     "errorslackhook": "errorslackhook",
-    "remoteRegions":"us-east-1,us-east-2",
+    "remoteRegions":"us-east-1,ap-south-1",
     "remoteAccounts":"456,789",
     "logLevel":"INFO",
     "perPostEventCount": "10",
