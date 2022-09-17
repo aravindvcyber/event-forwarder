@@ -6,6 +6,7 @@
     "event-forwarder": "bin/event-forwarder.js"
   },
   "scripts": {
+    "postinstall": "(cd layers/powertoolsSDK/nodejs && npm install) && (cd layers/slackSDK/nodejs && npm install) && (cd layers/xraySDK/nodejs && npm install)  && (cd layers/xray/nodejs && npm install) ",
     "build:cdk": "tsc --noEmit",
     "build:test": "NODE_ENV=test npm run wp:dev && npm run build:cdk:test",
     "build:prod": "NODE_ENV=production npm run wp:prod && npm run build:cdk:test",
@@ -13,12 +14,13 @@
     "build:cdk:test": "npm run build:cdk && npm run test",
     "watch": "tsc --noEmit -w",
     "test": "jest",
-    "cdk": "cdk",
+    "cdk": "npx cdk",
     "lint": "npm run build:ts && npx eslint --no-eslintrc -c .eslintrc.json . --ext .ts --fix",
     "wp:dev": "MODE=development webpack",
     "wp:prod": "MODE=production webpack",
     "cdk:boot": "cdk bootstrap --profile av",
     "cdk:synth": "npm run build && cdk synth EventForwarderStack --profile=av",
+    "cdk:synth:ci": "npm run build && cdk synth",
     "cdk:diff": "npm run build && cdk diff EventForwarderStack --profile=av",
     "cdk:deploy": "npm run build && cdk deploy EventForwarderStack --verbose --profile=av --hotswap",
     "cdk:destroy": "npm run build && cdk destroy EventForwarderStack --verbose --profile=av",
