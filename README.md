@@ -2,6 +2,8 @@
 
 Basically, I named this to stress the fact that we would be routing and consuming various aws event bridge events (especially the newly available AWS cloud formation events) to various channels which would help developers and teams effortlessly track and monitor the deployments happening in a multi-region and multi-account ecosystem.
 
+[![NodeJS with Webpack](https://github.com/aravindvcyber/event-forwarder/actions/workflows/pipeline.yml/badge.svg?branch=main)](https://github.com/aravindvcyber/event-forwarder/actions/workflows/pipeline.yml)
+
 **Note:** I have published the initial blog of this, highly recommended to check that out first before you try to do hands on.
 
 🔁 Original post at 🔗 [Dev Post](https://devpost.hashnode.dev/aws-cdk-101-projects-cdk-stackresourcedrift-events-forwarded-to-cool-slack-posts-event-forwarder)
