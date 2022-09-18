@@ -255,11 +255,15 @@ Here in this article, we choose to use dynamodb not only as an ad-hoc data store
 
 ## SAM cli local setup
 
-To be updated...
+🔁 Original post at 🔗 [Dev Post aws-cdk-101-sam-local-to-test-and-debug-lambda-function](https://devpost.hashnode.dev/aws-cdk-101-sam-local-to-test-and-debug-lambda-function)
+
+🔁 Reposted at 🔗 [dev to @aravindvcyber aws-cdk-101-sam-local-to-test-and-debug-lambda-function-1afj](https://dev.to/aws-builders/aws-cdk-101-sam-local-to-test-and-debug-lambda-function-1afj)
 
 ## dynamodb local setup 
 
-To be updated...
+🔁 Original post at 🔗 [Dev Post aws-cdk-101-dynamodb-local-setup-and-integrating-with-sam-invoke](https://devpost.hashnode.dev/aws-cdk-101-dynamodb-local-setup-and-integrating-with-sam-invoke)
+
+🔁 Reposted at 🔗 [dev to @aravindvcyber aws-cdk-101-dynamodb-local-setup-and-integrating-with-sam-invoke-527f](https://dev.to/aws-builders/aws-cdk-101-dynamodb-local-setup-and-integrating-with-sam-invoke-527f)
 
 This project is open to your generous contributions if you feel it will help other developers and also you could also solve the issues or bring new features with a Pull request.
 
