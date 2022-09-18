@@ -24,7 +24,16 @@ import {
 import { CloudformationEventDbModel } from "./model";
 import { logger } from "./stack-event-processor";
 
-const dynamo = AWSXRay.captureAWSClient(new DynamoDB());
+
+const options:any = {
+
+}
+
+if(process.env.AWS_SAM_LOCAL) {
+  options.endpoint = 'http://local-ddb:8000'
+}
+
+const dynamo = AWSXRay.captureAWSClient(new DynamoDB(options));
 
 const tableName: string = process.env.EVENT_STORE || "";
 

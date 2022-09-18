@@ -28,6 +28,8 @@ import { AttributeMap, ItemList, UpdateItemOutput } from "aws-sdk/clients/dynamo
 
 const middy = require("@middy/core");
 
+
+
 export const serviceName = "EventForwarderHandler";
 
 const {
@@ -55,6 +57,10 @@ export const tracer = new Tracer({ serviceName });
 tracer.provider.setLogger(logger);
 
 const handle = async function (event: SQSEvent) {
+
+  if(process.env.AWS_SAM_LOCAL) {
+    logger.info("running with sam local:", { event });
+  }
   tracer.putAnnotation("successfulStart", true);
 
   tracer.putMetadata("count", event.Records.length);

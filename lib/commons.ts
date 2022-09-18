@@ -84,7 +84,7 @@ const defaultLayerProps: LayerVersionProps = {
   code: Code.fromAsset(join(__dirname, "..", "layers", "default")),
   // code: Code.fromAsset(join(__dirname, "..", "dist", "layers", "utils")),
   compatibleArchitectures: [Architecture.X86_64],
-  compatibleRuntimes: [Runtime.NODEJS_14_X],
+  compatibleRuntimes: [Runtime.NODEJS_16_X],
 };
 
 export const generateLayerVersion = (
@@ -114,8 +114,8 @@ export const commonLambdaProps = {
   timeout: Duration.minutes(1),
   tracing: Tracing.ACTIVE,
   //profiling: true,
-  insightsVersion: LambdaInsightsVersion.VERSION_1_0_119_0,
-  runtime: Runtime.NODEJS_14_X,
+  insightsVersion: LambdaInsightsVersion.VERSION_1_0_135_0,
+  runtime: Runtime.NODEJS_16_X,
   logRetention:
     parseInt(config.get("logRetentionDays")) || RetentionDays.ONE_DAY,
 };

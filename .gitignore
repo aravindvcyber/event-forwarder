@@ -13,3 +13,8 @@ dist/
 lambda/stack-event-processor.spec.ts
 .DS_Store
 lambda/stack-event-processor.test.ts
+ddb-def.json
+
+logs/
+.aws-sam/
+.vscode/

@@ -17,7 +17,7 @@ I believe a lot of use cases will come soon for now I am starting with the below
 I have especially used Slack as the first delivery channel since it is quite common in organizations and free to set up personal workspace even for an amateur developer. At the same time, we are not trying to limit the possibilities. This solution could be further extended to include other mediums in the future.
 # Architecture in short :heart:
 
-![arch](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/k433rhx0gmlwp4p7b9wl.jpeg)
+![arch](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/msrbf94oefdrnu29a5db.jpeg)
 
 The backbone of this stack is based on the new feature released for the availability of cloud formation events in the default bus in the AWS Eventbridge.
 
@@ -252,6 +252,14 @@ Here in this article, we choose to use dynamodb not only as an ad-hoc data store
  "type": "CloudFormation Drift Detection Status Change"
 }
 ```
+
+## SAM cli local setup
+
+To be updated...
+
+## dynamodb local setup 
+
+To be updated...
 
 This project is open to your generous contributions if you feel it will help other developers and also you could also solve the issues or bring new features with a Pull request.
 

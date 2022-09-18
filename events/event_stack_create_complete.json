@@ -1,0 +1,36 @@
+{
+  "Records": [
+    {
+      "messageId": "19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+      "receiptHandle": "MessageReceiptHandle",
+      "body": "{\"version\":\"0\",\"source\":\"aws.cloudformation\",\"account\":\"123456789012\",\"id\":\"12345678-1234-1234-1001-111122223333\",\"region\":\"us-east-1\",\"detail-type\":\"CloudFormation Stack Status Change\",\"time\":\"2022-04-31T17:00:00Z\",\"resources\":[\"arn:aws:cloudformation:us-east-1:123456789012:stack/teststack\"],\"detail\":{\"stack-id\":\"arn:aws:cloudformation:us-west-1:123456789012:stack/teststack\",\"status-details\":{\"status\":\"CREATE_IN_PROGRESS\",\"status-reason\":\"\"}}}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1523232000000",
+        "SenderId": "123456789012",
+        "ApproximateFirstReceiveTimestamp": "1523232000001"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "7b270e59b47ff90a553787216d55d91d",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:{partition}:sqs:{region}:123456789012:MyQueue",
+      "awsRegion": "{region}"
+    },
+    {
+      "messageId": "19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+      "receiptHandle": "MessageReceiptHandle",
+      "body": "{\"version\":\"0\",\"source\":\"aws.cloudformation\",\"account\":\"123456789012\",\"id\":\"12345678-1234-1234-1002-111122223333\",\"region\":\"us-east-1\",\"detail-type\":\"CloudFormation Stack Status Change\",\"time\":\"2022-04-31T17:10:00Z\",\"resources\":[\"arn:aws:cloudformation:us-east-1:123456789012:stack/teststack\"],\"detail\":{\"stack-id\":\"arn:aws:cloudformation:us-west-1:123456789012:stack/teststack\",\"status-details\":{\"status\":\"CREATE_COMPLETE\",\"status-reason\":\"\"}}}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1523232000000",
+        "SenderId": "123456789012",
+        "ApproximateFirstReceiveTimestamp": "1523232000001"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "7b270e59b47ff90a553787216d55d91d",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:{partition}:sqs:{region}:123456789012:MyQueue",
+      "awsRegion": "{region}"
+    }
+  ]
+}
